@@ -1,6 +1,6 @@
 spring:
   application:
-    name: week4
+    name: connected_platform
   config:
     import: optional:application-secret.properties
   jpa:
@@ -12,3 +12,5 @@ spring:
         format_sql: true
         default_batch_fetch_size: 100
     show-sql: true
+    jwt:
+      secret: ${JWT_SECRET_KEY}
