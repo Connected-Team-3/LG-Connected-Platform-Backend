@@ -1,6 +1,7 @@
 package lg.connected_platform.user.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import lg.connected_platform.common.entity.TimeStamp;
 import lg.connected_platform.user.dto.request.UserUpdateRequest;
 import lg.connected_platform.videoHistory.entity.VideoHistory;
@@ -10,6 +11,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Data
@@ -20,14 +22,17 @@ public class User extends TimeStamp {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @NotNull
     private String loginId;
 
+    @NotNull
     private String password;
 
+    @NotNull
     private String name;
 
     @OneToMany(mappedBy = "user")
-    private List<VideoHistory> videoHistories;
+    private List<VideoHistory> videoHistories = new ArrayList<>();
 
     @Builder
     public User(
