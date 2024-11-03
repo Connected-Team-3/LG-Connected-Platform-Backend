@@ -50,7 +50,6 @@ public class User extends TimeStamp {
     }
 
     public User update(UserUpdateRequest request){
-        this.id = request.id();
         this.loginId = request.loginId();
         this.password = request.password();
         this.name = request.name();
