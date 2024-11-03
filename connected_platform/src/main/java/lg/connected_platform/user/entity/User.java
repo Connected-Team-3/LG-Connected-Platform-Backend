@@ -1,6 +1,7 @@
 package lg.connected_platform.user.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lg.connected_platform.common.entity.TimeStamp;
 import lg.connected_platform.user.dto.request.UserUpdateRequest;
@@ -22,13 +23,13 @@ public class User extends TimeStamp {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotNull
+    @NotBlank
     private String loginId;
 
-    @NotNull
+    @NotBlank
     private String password;
 
-    @NotNull
+    @NotBlank
     private String name;
 
     @OneToMany(mappedBy = "user")
@@ -53,7 +54,6 @@ public class User extends TimeStamp {
         this.loginId = request.loginId();
         this.password = request.password();
         this.name = request.name();
-        this.videoHistories = request.videoHistories();
         return this;
     }
 }
