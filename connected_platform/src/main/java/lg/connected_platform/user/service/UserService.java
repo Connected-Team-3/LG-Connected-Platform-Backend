@@ -10,6 +10,7 @@ import lg.connected_platform.global.service.ResponseService;
 import lg.connected_platform.user.dto.request.UserCreateRequest;
 import lg.connected_platform.user.dto.request.UserLoginRequest;
 import lg.connected_platform.user.dto.request.UserUpdateRequest;
+import lg.connected_platform.user.dto.response.UserResponse;
 import lg.connected_platform.user.entity.User;
 import lg.connected_platform.user.mapper.UserMapper;
 import lg.connected_platform.user.repository.UserRepository;
@@ -50,17 +51,17 @@ public class UserService {
         return ResponseService.getSingleResult(jwtTokenSet);
     }
 
-    //회원 정보 수정
+    //회원 정보 수정 -> 회원 여부 확인 필요
     @Transactional
-    public SingleResult<User> updateUser(UserUpdateRequest request){
+    public SingleResult<UserResponse> updateUser(UserUpdateRequest request){
         User user = userRepository.findById(request.id())
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_EXIST));
 
-        userRepository.save(user.update(request));
-        return ResponseService.getSingleResult(user);
+        userRepository.save(user.update(request)); //dirty checking으로 반환값 안 받아도 업데이트 반영
+        return ResponseService.getSingleResult(UserResponse.of(user));
     }
 
-    //로그아웃
+    //로그아웃 -> 회원 여부 확인 필요
     public SingleResult<Void> logout(){
         //토큰 무효화 클라이언트에서 처리
         Void tmp = null;

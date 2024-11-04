@@ -19,4 +19,8 @@ public class AuthService {
 
         return jwtTokenSet;
     }
+
+    public Long getUserIdFromToken(String token){
+        return jwtUtil.getId(token);
+    }
 }

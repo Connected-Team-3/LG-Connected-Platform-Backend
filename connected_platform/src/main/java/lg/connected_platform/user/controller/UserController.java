@@ -10,6 +10,7 @@ import lg.connected_platform.global.dto.response.result.SingleResult;
 import lg.connected_platform.user.dto.request.UserCreateRequest;
 import lg.connected_platform.user.dto.request.UserLoginRequest;
 import lg.connected_platform.user.dto.request.UserUpdateRequest;
+import lg.connected_platform.user.dto.response.UserResponse;
 import lg.connected_platform.user.entity.User;
 import lg.connected_platform.user.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -41,8 +42,8 @@ public class UserController {
     //회원 정보 업데이트
     @PutMapping("/update")
     @Operation(summary = "회원 정보 업데이트")
-    public SuccessResponse<SingleResult<User>> update(@Valid @RequestBody UserUpdateRequest request){
-        SingleResult<User> result = userService.updateUser(request);
+    public SuccessResponse<SingleResult<UserResponse>> update(@Valid @RequestBody UserUpdateRequest request){
+        SingleResult<UserResponse> result = userService.updateUser(request);
         return SuccessResponse.ok(result);
     }
 

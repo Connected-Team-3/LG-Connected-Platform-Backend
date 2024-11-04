@@ -44,7 +44,11 @@ public enum ErrorCode {
     // User
     USER_ALREADY_EXIST(-300, "이미 회원가입된 유저입니다.", 400),
     USER_NOT_EXIST(-301, "존재하지 않는 유저입니다.", 406),
-    USER_WRONG_PASSWORD(-302, "비밀번호가 틀렸습니다.", 401);
+    USER_WRONG_PASSWORD(-302, "비밀번호가 틀렸습니다.", 401),
+
+    //Video
+    VIDEO_UPLOADER_MISMATCH(-400, "업로더와 요청 유저가 다릅니다.", 403),
+    VIDEO_NOT_EXIST(-401, "존재하지 않는 영상입니다.", 406);
 
 
     private final int errorCode;
