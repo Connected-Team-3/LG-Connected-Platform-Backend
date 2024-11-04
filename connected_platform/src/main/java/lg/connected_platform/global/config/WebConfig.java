@@ -18,5 +18,9 @@ public class WebConfig implements WebMvcConfigurer {
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(jwtInterceptor).addPathPatterns("/api/user/update");
         registry.addInterceptor(jwtInterceptor).addPathPatterns("/api/user/logout");
+        registry.addInterceptor(jwtInterceptor).addPathPatterns("/api/video/upload");
+        registry.addInterceptor(jwtInterceptor).addPathPatterns("/api/video/play/*");
+        registry.addInterceptor(jwtInterceptor).addPathPatterns("/api/video/update");
+        registry.addInterceptor(jwtInterceptor).addPathPatterns("/api/video/delete/*");
     }
 }
