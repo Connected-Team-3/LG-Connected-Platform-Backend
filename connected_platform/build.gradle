@@ -21,11 +21,13 @@ configurations {
 
 repositories {
 	mavenCentral()
+	maven { url 'https://jitpack.io' }
 }
 
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
+	runtimeOnly 'com.mysql:mysql-connector-j'
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
@@ -41,6 +43,11 @@ dependencies {
 
 	//gstreamer
 	implementation 'org.freedesktop.gstreamer:gstreamer-java:1.5.2'
+	implementation 'net.java.dev.jna:jna:5.10.0'
+	implementation 'net.java.dev.jna:jna-platform:5.10.0'
+	implementation 'org.freedesktop.gstreamer:gst1-java-core:1.4.0'
+	implementation 'org.slf4j:slf4j-simple:1.7.30'
+	implementation 'org.webjars.npm:hls.js:1.0.7'
 
 	//rate limit
 	implementation group: 'com.github.vladimir-bukhtoyarov', name: 'bucket4j-core', version: '7.0.0'

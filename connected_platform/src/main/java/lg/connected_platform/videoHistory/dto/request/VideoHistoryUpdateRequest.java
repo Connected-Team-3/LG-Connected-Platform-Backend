@@ -8,10 +8,11 @@ import lg.connected_platform.video.entity.Video;
 import java.time.LocalDateTime;
 
 public record VideoHistoryUpdateRequest(
+        @NotNull
+        @Schema(description = "시청 기록 id", example = "1")
         Long id,
-        Video video,
-        Long videoTimeStamp,
-        LocalDateTime lastWatchedAt,
-        User user
+        @NotNull
+        @Schema(description = "어디까지 봤는지", example = "0")
+        Long videoTimeStamp
 ) {
 }
