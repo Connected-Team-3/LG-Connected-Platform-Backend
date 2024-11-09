@@ -53,7 +53,14 @@ public class UserService {
 
     //회원 정보 수정 -> 회원 여부 확인 필요
     @Transactional
-    public SingleResult<UserResponse> updateUser(UserUpdateRequest request){
+    public SingleResult<UserResponse> updateUser(UserUpdateRequest request, String token){
+        //회원 정보 수정 요청을 하는 유저와 수정 대상인 유저가 같아야 함
+        Long currentUserId = authService.getUserIdFromToken(token);
+
+        if(!currentUserId.equals(request.id())){
+            throw new CustomException(ErrorCode.FORBIDDEN);
+        }
+
         User user = userRepository.findById(request.id())
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_EXIST));
 
