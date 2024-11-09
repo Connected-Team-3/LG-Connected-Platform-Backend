@@ -3,8 +3,13 @@ package lg.connected_platform.video.dto.response;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import lg.connected_platform.hashtag.entity.Hashtag;
 import lg.connected_platform.video.entity.Video;
+import lg.connected_platform.videoHistory.entity.VideoHistory;
 import lombok.Builder;
+
+import java.util.List;
+import java.util.Set;
 
 @Builder
 public record VideoResponse(
@@ -25,7 +30,10 @@ public record VideoResponse(
         String sourceUrl,
         @NotBlank
         @Schema(description = "썸네일 url", example = "https://storage.googleapis.com/gtv-videos-bucket/sample/images/BigBuckBunny.jpg")
-        String thumbUrl
+        String thumbUrl,
+        @NotNull
+        @Schema(description = "태그 목록")
+        Set<Hashtag> hashtags
 ) {
     public static VideoResponse of(Video video){
         return VideoResponse.builder()
@@ -35,6 +43,7 @@ public record VideoResponse(
                 .uploaderId(video.getUploader().getId())
                 .sourceUrl(video.getSourceUrl())
                 .thumbUrl(video.getThumbUrl())
+                .hashtags(video.getHashtags())
                 .build();
     }
 }

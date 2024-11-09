@@ -3,6 +3,9 @@ package lg.connected_platform.video.dto.request;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import lg.connected_platform.hashtag.entity.Hashtag;
+
+import java.util.Set;
 
 public record VideoCreateRequest(
     @NotBlank
@@ -19,6 +22,8 @@ public record VideoCreateRequest(
     String sourceUrl,
     @NotBlank
     @Schema(description = "썸네일 url", example = "https://storage.googleapis.com/gtv-videos-bucket/sample/images/BigBuckBunny.jpg")
-    String thumbUrl
+    String thumbUrl,
+    @Schema(description = "해시태그", example = "#abcd")
+    Set<String> hashtags
 ) {
 }

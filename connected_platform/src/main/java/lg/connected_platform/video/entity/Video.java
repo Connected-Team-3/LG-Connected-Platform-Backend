@@ -3,6 +3,7 @@ package lg.connected_platform.video.entity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lg.connected_platform.common.entity.TimeStamp;
+import lg.connected_platform.hashtag.entity.Hashtag;
 import lg.connected_platform.user.entity.User;
 import lg.connected_platform.video.dto.request.VideoUpdateRequest;
 import lombok.AllArgsConstructor;
@@ -11,6 +12,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 @Data
 @Entity
@@ -36,6 +39,14 @@ public class Video extends TimeStamp {
     @NotBlank
     private String thumbUrl;
 
+    @ManyToMany
+    @JoinTable(
+            name = "video_hashtag",
+            joinColumns = @JoinColumn(name="video_id"),
+            inverseJoinColumns = @JoinColumn(name="hashtag_id")
+    )
+    private Set<Hashtag> hashtags = new HashSet<>();
+
     @Builder
     public Video(
             Long id,
@@ -43,7 +54,8 @@ public class Video extends TimeStamp {
             String description,
             User uploader,
             String sourceUrl,
-            String thumbUrl
+            String thumbUrl,
+            Set<Hashtag> hashtags
     ){
         this.id = id;
         this.title = title;
@@ -51,13 +63,15 @@ public class Video extends TimeStamp {
         this.uploader = uploader;
         this.sourceUrl = sourceUrl;
         this.thumbUrl = thumbUrl;
+        //this.hashtags = hashtags;
     }
 
-    public Video update(VideoUpdateRequest request){
+    public Video update(VideoUpdateRequest request, Set<Hashtag> hashtags){
         this.title = request.title();
-        this.description = request.description();;
-        this.sourceUrl = request.sourceUrl();;
+        this.description = request.description();
+        this.sourceUrl = request.sourceUrl();
         this.thumbUrl = request.thumbUrl();
+        this.hashtags = hashtags;
         return this;
     }
 
