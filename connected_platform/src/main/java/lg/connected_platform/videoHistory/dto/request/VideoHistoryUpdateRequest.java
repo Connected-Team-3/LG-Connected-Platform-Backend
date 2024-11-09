@@ -9,8 +9,11 @@ import java.time.LocalDateTime;
 
 public record VideoHistoryUpdateRequest(
         @NotNull
-        @Schema(description = "시청 기록 id", example = "1")
-        Long id,
+        @Schema(description = "user id", example = "1")
+        Long userId,
+        @NotNull
+        @Schema(description = "video id", example = "1")
+        Long videoId,
         @NotNull
         @Schema(description = "어디까지 봤는지", example = "0")
         Long videoTimeStamp

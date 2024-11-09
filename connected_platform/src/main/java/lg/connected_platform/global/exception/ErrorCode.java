@@ -48,7 +48,11 @@ public enum ErrorCode {
 
     //Video
     VIDEO_UPLOADER_MISMATCH(-400, "업로더와 요청 유저가 다릅니다.", 403),
-    VIDEO_NOT_EXIST(-401, "존재하지 않는 영상입니다.", 406);
+    VIDEO_NOT_EXIST(-401, "존재하지 않는 영상입니다.", 406),
+
+    //VideoHistory
+    USER_MISMATCH(-500, "요청 유저와 인증된 유저가 일치하지 않습니다", 403),
+    HISTORY_NOT_EXIST(-501, "시청 기록이 존재하지 않습니다.", 406);
 
 
     private final int errorCode;

@@ -74,7 +74,7 @@ public class VideoService {
         Video video = videoRepository.findById(id)
                 .orElseThrow(() -> new CustomException(ErrorCode.VIDEO_NOT_EXIST));
 
-        if(!currentUserId.equals(video.getId())){
+        if(!currentUserId.equals(video.getUploader().getId())){
             throw new CustomException(ErrorCode.VIDEO_UPLOADER_MISMATCH);
         }
 
