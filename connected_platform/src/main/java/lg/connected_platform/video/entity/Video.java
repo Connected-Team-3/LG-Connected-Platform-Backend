@@ -47,6 +47,9 @@ public class Video extends TimeStamp {
     )
     private Set<Hashtag> hashtags = new HashSet<>();
 
+    @Enumerated(EnumType.STRING)
+    private Category category;
+
     @Builder
     public Video(
             Long id,
@@ -55,7 +58,8 @@ public class Video extends TimeStamp {
             User uploader,
             String sourceUrl,
             String thumbUrl,
-            Set<Hashtag> hashtags
+            Set<Hashtag> hashtags,
+            Category category
     ){
         this.id = id;
         this.title = title;
@@ -63,7 +67,8 @@ public class Video extends TimeStamp {
         this.uploader = uploader;
         this.sourceUrl = sourceUrl;
         this.thumbUrl = thumbUrl;
-        //this.hashtags = hashtags;
+        this.hashtags = hashtags;
+        this.category = category;
     }
 
     public Video update(VideoUpdateRequest request, Set<Hashtag> hashtags){

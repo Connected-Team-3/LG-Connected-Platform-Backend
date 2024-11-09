@@ -19,6 +19,7 @@ public class VideoMapper {
                 .sourceUrl(request.sourceUrl())
                 .thumbUrl(request.thumbUrl())
                 .hashtags(hashtags)
+                .category(request.category())
                 .build();
     }
 }

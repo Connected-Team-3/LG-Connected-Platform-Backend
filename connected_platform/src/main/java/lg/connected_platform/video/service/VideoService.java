@@ -1,6 +1,7 @@
 package lg.connected_platform.video.service;
 
 import jakarta.transaction.Transactional;
+import lg.connected_platform.global.dto.response.result.ListResult;
 import lg.connected_platform.global.dto.response.result.SingleResult;
 import lg.connected_platform.global.exception.CustomException;
 import lg.connected_platform.global.exception.ErrorCode;
@@ -13,6 +14,7 @@ import lg.connected_platform.user.repository.UserRepository;
 import lg.connected_platform.video.dto.request.VideoCreateRequest;
 import lg.connected_platform.video.dto.request.VideoUpdateRequest;
 import lg.connected_platform.video.dto.response.VideoResponse;
+import lg.connected_platform.video.entity.Category;
 import lg.connected_platform.video.entity.Video;
 import lg.connected_platform.video.mapper.VideoMapper;
 import lg.connected_platform.video.repository.VideoRepository;
@@ -20,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -40,11 +43,13 @@ public class VideoService {
             throw new CustomException(ErrorCode.VIDEO_UPLOADER_MISMATCH);
         }
 
+        //업로더 조회
         User uploader = userRepository.findById(request.uploaderId())
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_EXIST));
 
         Video newVideo = VideoMapper.from(request, uploader, new HashSet<>());
 
+        //해시태그 처리
         Video finalNewVideo = newVideo;
         Set<Hashtag> hashtags = request.hashtags().stream()
                 .map(tagName ->{
@@ -124,7 +129,20 @@ public class VideoService {
             throw new CustomException(ErrorCode.VIDEO_UPLOADER_MISMATCH);
         }
 
+        video.getHashtags().forEach(hashtag -> {
+            hashtag.getVideos().remove(video);
+        });
+
         videoRepository.deleteById(id);
         return ResponseService.getSingleResult(video.getId());
+    }
+
+    //카테고리별 영상 전체 조회
+    public ListResult<VideoResponse> getVideosByCategory(Category category){
+        List<VideoResponse> videoList = videoRepository.findByCategory(category).stream()
+                .map(VideoResponse::of)
+                .toList();
+
+        return ResponseService.getListResult(videoList);
     }
 }

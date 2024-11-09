@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lg.connected_platform.hashtag.entity.Hashtag;
+import lg.connected_platform.video.entity.Category;
 import lg.connected_platform.video.entity.Video;
 import lg.connected_platform.videoHistory.entity.VideoHistory;
 import lombok.Builder;
@@ -33,7 +34,10 @@ public record VideoResponse(
         String thumbUrl,
         @NotNull
         @Schema(description = "태그 목록")
-        Set<Hashtag> hashtags
+        Set<Hashtag> hashtags,
+        @NotNull
+        @Schema(description = "음식 카테고리", example = "KOREAN_FOOD")
+        Category category
 ) {
     public static VideoResponse of(Video video){
         return VideoResponse.builder()
@@ -44,6 +48,7 @@ public record VideoResponse(
                 .sourceUrl(video.getSourceUrl())
                 .thumbUrl(video.getThumbUrl())
                 .hashtags(video.getHashtags())
+                .category(video.getCategory())
                 .build();
     }
 }

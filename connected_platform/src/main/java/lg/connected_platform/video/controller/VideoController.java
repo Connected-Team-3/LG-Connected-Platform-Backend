@@ -5,12 +5,14 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lg.connected_platform.global.dto.response.SuccessResponse;
+import lg.connected_platform.global.dto.response.result.ListResult;
 import lg.connected_platform.global.dto.response.result.SingleResult;
 import lg.connected_platform.global.exception.CustomException;
 import lg.connected_platform.global.exception.ErrorCode;
 import lg.connected_platform.video.dto.request.VideoCreateRequest;
 import lg.connected_platform.video.dto.request.VideoUpdateRequest;
 import lg.connected_platform.video.dto.response.VideoResponse;
+import lg.connected_platform.video.entity.Category;
 import lg.connected_platform.video.service.VideoService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -94,6 +96,15 @@ public class VideoController {
         token = token.substring(7);
 
         SingleResult<Long> result = videoService.deleteById(id, token);
+        return SuccessResponse.ok(result);
+    }
+
+    //카테고리별 조회
+    @GetMapping("/{category}")
+    @Operation(summary = "카테고리별 조회")
+    public SuccessResponse<ListResult<VideoResponse>> getVideosByCategory(
+            @PathVariable("category")Category category){
+        ListResult<VideoResponse> result = videoService.getVideosByCategory(category);
         return SuccessResponse.ok(result);
     }
 }

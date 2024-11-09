@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lg.connected_platform.hashtag.entity.Hashtag;
+import lg.connected_platform.video.entity.Category;
 
 import java.util.Set;
 
@@ -24,6 +25,9 @@ public record VideoCreateRequest(
     @Schema(description = "썸네일 url", example = "https://storage.googleapis.com/gtv-videos-bucket/sample/images/BigBuckBunny.jpg")
     String thumbUrl,
     @Schema(description = "해시태그", example = "#abcd")
-    Set<String> hashtags
+    Set<String> hashtags,
+    @NotNull
+    @Schema(description = "음식 카테고리", example = "KOREAN_FOOD")
+    Category category
 ) {
 }
