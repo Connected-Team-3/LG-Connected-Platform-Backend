@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lg.connected_platform.common.entity.TimeStamp;
 import lg.connected_platform.hashtag.entity.Hashtag;
+import lg.connected_platform.playlist.entity.Playlist;
 import lg.connected_platform.user.entity.User;
 import lg.connected_platform.video.dto.request.VideoUpdateRequest;
 import lombok.AllArgsConstructor;
@@ -13,6 +14,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Data

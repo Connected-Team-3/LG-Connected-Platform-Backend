@@ -51,9 +51,11 @@ public enum ErrorCode {
     VIDEO_NOT_EXIST(-401, "존재하지 않는 영상입니다.", 406),
     HASHTAG_NOT_EXIST(-402, "해당 해시태그가 존재하지 않습니다.", 406),
 
-    //VideoHistory
+    //VideoHistory, Playlist
     USER_MISMATCH(-500, "요청 유저와 인증된 유저가 일치하지 않습니다", 403),
-    HISTORY_NOT_EXIST(-501, "시청 기록이 존재하지 않습니다.", 406);
+    HISTORY_NOT_EXIST(-501, "시청 기록이 존재하지 않습니다.", 406),
+    PLAYLIST_NOT_EXIST(-501, "플레이리스트가 존재하지 않습니다.", 406),
+    PLAYLIST_FLAG_ERROR(-502, "삽입과 삭제는 동시에 활성화되거나 비활성화 될 수 없습니다", 422);
 
 
 
