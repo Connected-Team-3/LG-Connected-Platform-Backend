@@ -75,4 +75,12 @@ public class UserService {
         return ResponseService.getSingleResult(tmp);
     }
 
+    //특정 회원 조회
+    public SingleResult<UserResponse> findById(Long id){
+        User user = userRepository.findById(id)
+                .orElseThrow(()-> new CustomException(ErrorCode.USER_NOT_EXIST));
+
+        return ResponseService.getSingleResult(UserResponse.of(user));
+    }
+
 }

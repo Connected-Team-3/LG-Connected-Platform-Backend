@@ -61,6 +61,7 @@ public class VideoService {
 
         newVideo.setHashtags(hashtags);
         newVideo = videoRepository.save(newVideo);
+        uploader.getVideos().add(newVideo);
         return ResponseService.getSingleResult(newVideo.getId());
     }
 
@@ -91,6 +92,10 @@ public class VideoService {
         Video video = videoRepository.findById(request.id())
                 .orElseThrow(()-> new CustomException(ErrorCode.VIDEO_NOT_EXIST));
 
+        User uploader = userRepository.findById(request.uploaderId())
+                .orElseThrow(()-> new CustomException(ErrorCode.USER_NOT_EXIST));
+
+        uploader.getVideos().remove(video);
 
         //요청에 포함된 해시태그들
         Set<Hashtag> newHashTags = request.hashtags().stream()
@@ -112,6 +117,7 @@ public class VideoService {
 
         //video.setHashtags(newHashTags);
         videoRepository.save(video.update(request, newHashTags));
+        uploader.getVideos().add(video);
         return ResponseService.getSingleResult(VideoResponse.of(video));
     }
 
@@ -133,6 +139,7 @@ public class VideoService {
             hashtag.getVideos().remove(video);
         });
 
+        video.getUploader().getVideos().remove(video);
         videoRepository.deleteById(id);
         return ResponseService.getSingleResult(video.getId());
     }
@@ -144,5 +151,17 @@ public class VideoService {
                 .toList();
 
         return ResponseService.getListResult(videoList);
+    }
+
+    //특정 유저가 업로드한 영상 전체 조회
+    public ListResult<VideoResponse> getVideosByUserId(Long userId){
+        User uploader = userRepository.findById(userId)
+                .orElseThrow(()-> new CustomException(ErrorCode.USER_NOT_EXIST));
+
+        List<VideoResponse> videos = uploader.getVideos().stream()
+                .map(VideoResponse::of)
+                .toList();
+
+        return ResponseService.getListResult(videos);
     }
 }

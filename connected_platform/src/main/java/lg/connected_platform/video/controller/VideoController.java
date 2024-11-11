@@ -107,4 +107,13 @@ public class VideoController {
         ListResult<VideoResponse> result = videoService.getVideosByCategory(category);
         return SuccessResponse.ok(result);
     }
+
+    //특정 유저가 업로드한 영상 전체 조회
+    @GetMapping("/getVideos/{userId}")
+    @Operation(summary = "특정 유저가 업로드한 영상 전체 조회")
+    public SuccessResponse<ListResult<VideoResponse>> getVideosByUserId(
+            @PathVariable("userId") Long id) {
+        ListResult<VideoResponse> result = videoService.getVideosByUserId(id);
+        return SuccessResponse.ok(result);
+    }
 }

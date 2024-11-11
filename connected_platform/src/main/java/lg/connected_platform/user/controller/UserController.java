@@ -70,4 +70,13 @@ public class UserController {
         SingleResult<Void> result = userService.logout();
         return SuccessResponse.ok(result);
     }
+
+    //특정 유저 조회
+    @GetMapping("/{userId}")
+    @Operation(summary = "특정 회원 조회")
+    public SuccessResponse<SingleResult<UserResponse>> findById(
+            @PathVariable("userId") Long id){
+        SingleResult<UserResponse> result = userService.findById(id);
+        return SuccessResponse.ok(result);
+    }
 }

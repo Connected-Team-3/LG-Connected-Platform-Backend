@@ -1,6 +1,7 @@
 package lg.connected_platform.playlist.service;
 
 import jakarta.transaction.Transactional;
+import lg.connected_platform.global.dto.response.result.ListResult;
 import lg.connected_platform.global.dto.response.result.SingleResult;
 import lg.connected_platform.global.exception.CustomException;
 import lg.connected_platform.global.exception.ErrorCode;
@@ -114,5 +115,17 @@ public class PlaylistService {
         playlist.getUser().getPlaylists().remove(playlist);
         playlistRepository.deleteById(id);
         return ResponseService.getSingleResult(playlist.getId());
+    }
+
+    //특정 유저의 전체 플레이리스트 조회
+    public ListResult<PlaylistResponse> getUserPlaylist(Long userId){
+        User user = userRepository.findById(userId)
+                .orElseThrow(()-> new CustomException(ErrorCode.USER_NOT_EXIST));
+
+        List<PlaylistResponse> playlist = user.getPlaylists().stream()
+                .map(PlaylistResponse::of)
+                .toList();
+
+        return ResponseService.getListResult(playlist);
     }
 }

@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lg.connected_platform.global.dto.response.SuccessResponse;
+import lg.connected_platform.global.dto.response.result.ListResult;
 import lg.connected_platform.global.dto.response.result.SingleResult;
 import lg.connected_platform.global.exception.CustomException;
 import lg.connected_platform.global.exception.ErrorCode;
@@ -91,6 +92,15 @@ public class PlaylistController {
         token = token.substring(7);
 
         SingleResult<Long> result = playlistService.deleteById(id, token);
+        return SuccessResponse.ok(result);
+    }
+
+    //특정 유저의 전체 플레이리스트 조회
+    @GetMapping("/getPlaylist/{userId}")
+    @Operation(summary = "특정 유저의 전체 플레이리스트 조회")
+    public SuccessResponse<ListResult<PlaylistResponse>> getPlaylistByUserId(
+            @PathVariable("userId") Long id){
+        ListResult<PlaylistResponse> result = playlistService.getUserPlaylist(id);
         return SuccessResponse.ok(result);
     }
 
