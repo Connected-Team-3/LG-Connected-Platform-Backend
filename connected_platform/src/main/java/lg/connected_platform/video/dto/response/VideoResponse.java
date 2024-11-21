@@ -6,11 +6,13 @@ import jakarta.validation.constraints.NotNull;
 import lg.connected_platform.hashtag.entity.Hashtag;
 import lg.connected_platform.video.entity.Category;
 import lg.connected_platform.video.entity.Video;
+import lg.connected_platform.videoHashtag.entity.VideoHashtag;
 import lg.connected_platform.videoHistory.entity.VideoHistory;
 import lombok.Builder;
 
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Builder
 public record VideoResponse(
@@ -33,8 +35,8 @@ public record VideoResponse(
         @Schema(description = "썸네일 url", example = "https://storage.googleapis.com/gtv-videos-bucket/sample/images/BigBuckBunny.jpg")
         String thumbUrl,
         @NotNull
-        @Schema(description = "태그 목록")
-        Set<Hashtag> hashtags,
+        @Schema(description = "태그 목록", example = "[\"#tag1\", \"#tag2\"]")
+        Set<String> hashtags,
         @NotNull
         @Schema(description = "음식 카테고리", example = "KOREAN_FOOD")
         Category category
@@ -47,7 +49,10 @@ public record VideoResponse(
                 .uploaderId(video.getUploader().getId())
                 .sourceUrl(video.getSourceUrl())
                 .thumbUrl(video.getThumbUrl())
-                .hashtags(video.getHashtags())
+                .hashtags(video.getVideoHashtags().stream()
+                        .map(VideoHashtag::getHashtag)
+                        .map(Hashtag::getName)
+                        .collect(Collectors.toSet()))
                 .category(video.getCategory())
                 .build();
     }

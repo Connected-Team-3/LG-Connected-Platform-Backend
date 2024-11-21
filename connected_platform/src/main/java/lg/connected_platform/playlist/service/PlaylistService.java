@@ -13,6 +13,8 @@ import lg.connected_platform.playlist.dto.response.PlaylistResponse;
 import lg.connected_platform.playlist.entity.Playlist;
 import lg.connected_platform.playlist.mapper.PlaylistMapper;
 import lg.connected_platform.playlist.repository.PlaylistRepository;
+import lg.connected_platform.playlistVideo.entity.PlaylistVideo;
+import lg.connected_platform.playlistVideo.repository.PlaylistVideoRepository;
 import lg.connected_platform.user.entity.User;
 import lg.connected_platform.user.repository.UserRepository;
 import lg.connected_platform.video.entity.Video;
@@ -29,6 +31,7 @@ public class PlaylistService {
     private final UserRepository userRepository;
     private final VideoRepository videoRepository;
     private final AuthService authService;
+    private final PlaylistVideoRepository playlistVideoRepository;
 
     //플레이리스트 생성
     public SingleResult<Long> create(PlaylistCreateRequest request, String token){
@@ -43,17 +46,20 @@ public class PlaylistService {
         User user = userRepository.findById(request.userId())
                 .orElseThrow(()-> new CustomException(ErrorCode.USER_NOT_EXIST));
 
-        //비디오 id list를 비디오 객체 list로 변환
-        List<Video> videoList = request.videoIdList().stream()
-                .map(videoId ->{
-                    return videoRepository.findById(videoId)
-                            .orElseThrow(()-> new CustomException(ErrorCode.VIDEO_NOT_EXIST));
-                })
-                .toList();
-
-        Playlist newPlaylist = PlaylistMapper.from(request, user, videoList);
+        Playlist newPlaylist = PlaylistMapper.from(request, user);
         playlistRepository.save(newPlaylist);
+
+        //PlaylistVideo 생성
+        request.videoIdList().forEach(videoId ->{
+            Video video = videoRepository.findById(videoId)
+                    .orElseThrow(()-> new CustomException(ErrorCode.VIDEO_NOT_EXIST));
+
+            PlaylistVideo playlistVideo = new PlaylistVideo(newPlaylist, video);
+            playlistVideoRepository.save(playlistVideo);
+        });
+
         user.getPlaylists().add(newPlaylist);
+
         return ResponseService.getSingleResult(newPlaylist.getId());
     }
 
@@ -92,9 +98,10 @@ public class PlaylistService {
         //유저에서 기존의 플레이리스트 삭제
         user.getPlaylists().remove(playlist);
 
-        playlistRepository.save(playlist.update(request, video));
+        playlistRepository.save(playlist.update(request, video, playlistVideoRepository));
         //업데이트 된 플레이리스트 다시 삽입
         user.getPlaylists().add(playlist);
+
         return ResponseService.getSingleResult(PlaylistResponse.of(playlist));
     }
 
@@ -113,6 +120,7 @@ public class PlaylistService {
         }
 
         playlist.getUser().getPlaylists().remove(playlist);
+        playlistVideoRepository.deleteAllByPlaylist(playlist);
         playlistRepository.deleteById(id);
         return ResponseService.getSingleResult(playlist.getId());
     }

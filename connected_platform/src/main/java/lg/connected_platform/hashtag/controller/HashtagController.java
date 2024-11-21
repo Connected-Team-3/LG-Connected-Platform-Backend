@@ -4,7 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lg.connected_platform.global.dto.response.SuccessResponse;
 import lg.connected_platform.global.dto.response.result.ListResult;
-import lg.connected_platform.hashtag.dto.service.HashtagService;
+import lg.connected_platform.hashtag.service.HashtagService;
 import lg.connected_platform.video.dto.response.VideoResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;

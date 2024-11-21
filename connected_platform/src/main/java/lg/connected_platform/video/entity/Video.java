@@ -7,6 +7,7 @@ import lg.connected_platform.hashtag.entity.Hashtag;
 import lg.connected_platform.playlist.entity.Playlist;
 import lg.connected_platform.user.entity.User;
 import lg.connected_platform.video.dto.request.VideoUpdateRequest;
+import lg.connected_platform.videoHashtag.entity.VideoHashtag;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -41,16 +42,11 @@ public class Video extends TimeStamp {
     @NotBlank
     private String thumbUrl;
 
-    @ManyToMany
-    @JoinTable(
-            name = "video_hashtag",
-            joinColumns = @JoinColumn(name="video_id"),
-            inverseJoinColumns = @JoinColumn(name="hashtag_id")
-    )
-    private Set<Hashtag> hashtags = new HashSet<>();
-
     @Enumerated(EnumType.STRING)
     private Category category;
+
+    @OneToMany(mappedBy = "video", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<VideoHashtag> videoHashtags = new HashSet<>();
 
     @Builder
     public Video(
@@ -60,7 +56,7 @@ public class Video extends TimeStamp {
             User uploader,
             String sourceUrl,
             String thumbUrl,
-            Set<Hashtag> hashtags,
+            Set<VideoHashtag> videoHashtags,
             Category category
     ){
         this.id = id;
@@ -69,16 +65,16 @@ public class Video extends TimeStamp {
         this.uploader = uploader;
         this.sourceUrl = sourceUrl;
         this.thumbUrl = thumbUrl;
-        this.hashtags = hashtags;
+        this.videoHashtags = videoHashtags;
         this.category = category;
     }
 
-    public Video update(VideoUpdateRequest request, Set<Hashtag> hashtags){
+    public Video update(VideoUpdateRequest request, Set<VideoHashtag> videoHashtags){
         this.title = request.title();
         this.description = request.description();
         this.sourceUrl = request.sourceUrl();
         this.thumbUrl = request.thumbUrl();
-        this.hashtags = hashtags;
+        this.videoHashtags = videoHashtags;
         return this;
     }
 

@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lg.connected_platform.playlist.entity.Playlist;
+import lg.connected_platform.playlistVideo.entity.PlaylistVideo;
 import lg.connected_platform.video.entity.Video;
 import lombok.Builder;
 
@@ -25,7 +26,8 @@ public record PlaylistResponse(
         String title
 ) {
         public static PlaylistResponse of(Playlist playlist){
-                List<Long> videoIdList = playlist.getVideos().stream()
+                List<Long> videoIdList = playlist.getPlaylistVideos().stream()
+                        .map(PlaylistVideo::getVideo)
                         .map(Video::getId)
                         .toList();
 

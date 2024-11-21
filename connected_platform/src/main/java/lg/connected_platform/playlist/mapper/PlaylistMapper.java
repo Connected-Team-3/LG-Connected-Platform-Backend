@@ -11,10 +11,9 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PlaylistMapper {
     //DTO와 엔티티 사이의 변환을 담당
-    public static Playlist from(PlaylistCreateRequest request, User user, List<Video> videos){
+    public static Playlist from(PlaylistCreateRequest request, User user){
         return Playlist.builder()
                 .user(user)
-                .videos(videos)
                 .title(request.title())
                 .build();
     }

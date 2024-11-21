@@ -27,7 +27,7 @@ public record VideoUpdateRequest(
         @NotBlank
         @Schema(description = "썸네일 url", example = "https://storage.googleapis.com/gtv-videos-bucket/sample/images/BigBuckBunny.jpg")
         String thumbUrl,
-        @Schema(description = "해시태그", example = "#abcd")
+        @Schema(description = "해시태그", example = "[\"#abcd\"]")
         Set<String> hashtags,
         @NotNull
         @Schema(description = "음식 카테고리", example = "KOREAN_FOOD")

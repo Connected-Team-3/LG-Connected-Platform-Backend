@@ -1,9 +1,12 @@
 package lg.connected_platform.playlist.entity;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lg.connected_platform.common.entity.TimeStamp;
 import lg.connected_platform.playlist.dto.request.PlaylistUpdateRequest;
+import lg.connected_platform.playlistVideo.entity.PlaylistVideo;
+import lg.connected_platform.playlistVideo.repository.PlaylistVideoRepository;
 import lg.connected_platform.user.entity.User;
 import lg.connected_platform.video.entity.Video;
 import lombok.Builder;
@@ -25,13 +28,9 @@ public class Playlist extends TimeStamp {
     @JoinColumn(name = "user_id")
     private User user;
 
-    @ManyToMany
-    @JoinTable(
-            name = "playlist_video",
-            joinColumns = @JoinColumn(name="playlist_id"),
-            inverseJoinColumns = @JoinColumn(name="video_id")
-    )
-    private List<Video> videos = new ArrayList<>();
+    @OneToMany(mappedBy = "playlist", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
+    private List<PlaylistVideo> playlistVideos = new ArrayList<>();
 
     @NotBlank
     private String title;
@@ -40,23 +39,36 @@ public class Playlist extends TimeStamp {
     public Playlist(
             Long id,
             User user,
-            List<Video> videos,
+            List<PlaylistVideo> playlistVideos,
             String title
     ){
         this.id = id;
         this.user = user;
-        this.videos = videos;
+        this.playlistVideos = playlistVideos;
         this.title = title;
     }
 
-    public Playlist update(PlaylistUpdateRequest request, Video video){
+    public Playlist update(PlaylistUpdateRequest request, Video video, PlaylistVideoRepository playlistVideoRepository){
         this.title = request.title();
 
         if(request.insertFlag()){
-            this.videos.add(video);
+            boolean exists = playlistVideoRepository.existsByPlaylistAndVideo(this, video);
+            if(!exists){
+                //PlaylistVideo 생성 및 저장
+                PlaylistVideo playlistVideo = new PlaylistVideo(this, video);
+                playlistVideoRepository.save(playlistVideo);
+
+                this.playlistVideos.add(playlistVideo);
+
+            }
         }
         if(request.deleteFlag()){
-            this.videos.remove(video);
+            PlaylistVideo target = playlistVideoRepository.findByPlaylistAndVideo(this, video);
+            if(target != null){
+                playlistVideoRepository.delete(target);
+
+                this.playlistVideos.remove(target);
+            }
         }
 
         return this;

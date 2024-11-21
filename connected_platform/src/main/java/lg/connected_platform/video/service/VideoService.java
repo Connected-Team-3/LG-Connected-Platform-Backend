@@ -18,6 +18,8 @@ import lg.connected_platform.video.entity.Category;
 import lg.connected_platform.video.entity.Video;
 import lg.connected_platform.video.mapper.VideoMapper;
 import lg.connected_platform.video.repository.VideoRepository;
+import lg.connected_platform.videoHashtag.entity.VideoHashtag;
+import lg.connected_platform.videoHashtag.repository.VideoHashtagRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -33,6 +35,7 @@ public class VideoService {
     private final UserRepository userRepository;
     private final AuthService authService;
     private final HashtagRepository hashtagRepository;
+    private final VideoHashtagRepository videoHashtagRepository;
 
     //영상 업로드 -> 회원 여부 확인 필요
     public SingleResult<Long> save(VideoCreateRequest request, String token){
@@ -48,19 +51,21 @@ public class VideoService {
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_EXIST));
 
         Video newVideo = VideoMapper.from(request, uploader, new HashSet<>());
+        newVideo = videoRepository.save(newVideo);
 
+
+        /*Set<VideoHashtag> tmp = new HashSet<>();
         //해시태그 처리
         Video finalNewVideo = newVideo;
-        Set<Hashtag> hashtags = request.hashtags().stream()
-                .map(tagName ->{
-                    Hashtag hashtag = findOrCreateHashtag(tagName);
-                    hashtag.getVideos().add(finalNewVideo);
-                    return hashtag;
-                })
-                .collect(Collectors.toSet());
+        request.hashtags().forEach(tagName ->{
+            Hashtag hashtag = findOrCreateHashtag(tagName);
+            VideoHashtag videoHashtag = new VideoHashtag(finalNewVideo, hashtag);
+            videoHashtagRepository.save(videoHashtag);
+            tmp.add(videoHashtag);
+        });
 
-        newVideo.setHashtags(hashtags);
-        newVideo = videoRepository.save(newVideo);
+        newVideo.setVideoHashtags(tmp);
+        newVideo = videoRepository.save(newVideo);*/
         uploader.getVideos().add(newVideo);
         return ResponseService.getSingleResult(newVideo.getId());
     }
@@ -97,27 +102,30 @@ public class VideoService {
 
         uploader.getVideos().remove(video);
 
+
         //요청에 포함된 해시태그들
         Set<Hashtag> newHashTags = request.hashtags().stream()
                 .map(this::findOrCreateHashtag)
                 .collect(Collectors.toSet());
 
-        //기존 해시태그들
-        Set<Hashtag> currentHashTags = video.getHashtags();
+        //VideoHashtag를 통해 기존 해시태그 정리
+        videoHashtagRepository.deleteAllByVideo(video);
 
-        //제거할 해시태그
-        Set<Hashtag> removeHashTags = currentHashTags.stream()
-                .filter(hashtag -> !newHashTags.contains(hashtag))
-                .collect(Collectors.toSet());
+        Set<VideoHashtag> tmp = new HashSet<>();
 
-        //해시태그에서 해당 비디오 제거
-        removeHashTags.forEach(hashtag -> {
-            hashtag.getVideos().remove(video);
+        //새로운 VideoHashtag 생성
+        newHashTags.forEach(tag->{
+            VideoHashtag videoHashtag = new VideoHashtag(video, tag);
+            videoHashtagRepository.save(videoHashtag);
+            tmp.add(videoHashtag);
         });
 
-        //video.setHashtags(newHashTags);
-        videoRepository.save(video.update(request, newHashTags));
+        //비디오 내용 업데이트
+        video.update(request, tmp);
+
+        //user의 videos 리스트 업데이트
         uploader.getVideos().add(video);
+
         return ResponseService.getSingleResult(VideoResponse.of(video));
     }
 
@@ -135,12 +143,15 @@ public class VideoService {
             throw new CustomException(ErrorCode.VIDEO_UPLOADER_MISMATCH);
         }
 
-        video.getHashtags().forEach(hashtag -> {
-            hashtag.getVideos().remove(video);
-        });
+        User uploader = video.getUploader();
+        uploader.getVideos().remove(video);
 
-        video.getUploader().getVideos().remove(video);
+        //VideoHashtag 관계 삭제
+        videoHashtagRepository.deleteAllByVideo(video);
+
+        //Video 삭제
         videoRepository.deleteById(id);
+
         return ResponseService.getSingleResult(video.getId());
     }
 
