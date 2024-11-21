@@ -4,7 +4,9 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lg.connected_platform.common.entity.TimeStamp;
+import lg.connected_platform.playlist.entity.Playlist;
 import lg.connected_platform.user.dto.request.UserUpdateRequest;
+import lg.connected_platform.video.entity.Video;
 import lg.connected_platform.videoHistory.entity.VideoHistory;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -34,6 +36,12 @@ public class User extends TimeStamp {
 
     @OneToMany(mappedBy = "user")
     private List<VideoHistory> videoHistories = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user")
+    private List<Playlist> playlists = new ArrayList<>();
+
+    @OneToMany(mappedBy = "uploader")
+    private List<Video> videos = new ArrayList<>();
 
     @Builder
     public User(

@@ -53,7 +53,6 @@ public class VideoHistory extends TimeStamp {
     }
 
     public VideoHistory update(VideoHistoryUpdateRequest request){
-        this.id = request.id();
         this.videoTimeStamp = request.videoTimeStamp();
         return this;
     }

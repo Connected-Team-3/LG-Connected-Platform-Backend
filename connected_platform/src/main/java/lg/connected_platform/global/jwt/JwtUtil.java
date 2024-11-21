@@ -18,7 +18,7 @@ import java.util.Date;
 @Component
 public class JwtUtil {
     private SecretKey secretKey;
-    private final long expiration = 1000 * 60 * 60; //1시간
+    private final long expiration = 1000 * 60 * 60 * 2; //2시간
 
     public JwtUtil(@Value("${spring.jwt.secret}") String secret) {
         secretKey = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8),
