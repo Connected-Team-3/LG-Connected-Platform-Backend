@@ -53,8 +53,7 @@ public class VideoService {
         Video newVideo = VideoMapper.from(request, uploader, new HashSet<>());
         newVideo = videoRepository.save(newVideo);
 
-
-        /*Set<VideoHashtag> tmp = new HashSet<>();
+        Set<VideoHashtag> tmp = new HashSet<>();
         //해시태그 처리
         Video finalNewVideo = newVideo;
         request.hashtags().forEach(tagName ->{
@@ -63,9 +62,11 @@ public class VideoService {
             videoHashtagRepository.save(videoHashtag);
             tmp.add(videoHashtag);
         });
+        System.out.println(tmp);
 
         newVideo.setVideoHashtags(tmp);
-        newVideo = videoRepository.save(newVideo);*/
+
+        newVideo = videoRepository.save(newVideo);
         uploader.getVideos().add(newVideo);
         return ResponseService.getSingleResult(newVideo.getId());
     }

@@ -6,15 +6,15 @@ import lg.connected_platform.common.entity.TimeStamp;
 import lg.connected_platform.user.entity.User;
 import lg.connected_platform.video.entity.Video;
 import lg.connected_platform.videoHistory.dto.request.VideoHistoryUpdateRequest;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 
-@Data
+//@Data
+@Getter
+@Setter
 @Entity
 @NoArgsConstructor
 @EntityListeners(AuditingEntityListener.class)

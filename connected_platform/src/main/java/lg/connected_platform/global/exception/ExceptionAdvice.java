@@ -26,6 +26,7 @@ public class ExceptionAdvice {
                 .errorClass(e.getClass().toString())
                 .errorMessage(e.getMessage())
                 .build();
+        System.out.println(e.getMessage());
         return ErrorResponse.of(ErrorCode.SERVER_UNTRACKED_ERROR.getErrorCode(), ErrorCode.SERVER_UNTRACKED_ERROR.getMessage(), serverErrorData);
     }
 
