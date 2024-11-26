@@ -8,18 +8,17 @@ import lg.connected_platform.playlist.entity.Playlist;
 import lg.connected_platform.user.entity.User;
 import lg.connected_platform.video.dto.request.VideoUpdateRequest;
 import lg.connected_platform.videoHashtag.entity.VideoHashtag;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-@Data
+//@Data
 @Entity
+@Getter
+@Setter
 @NoArgsConstructor
 public class Video extends TimeStamp {
     @Id
@@ -32,7 +31,7 @@ public class Video extends TimeStamp {
     @NotBlank
     private String description;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id") // 외래 키 컬럼 정의
     private User uploader;
 
@@ -45,7 +44,7 @@ public class Video extends TimeStamp {
     @Enumerated(EnumType.STRING)
     private Category category;
 
-    @OneToMany(mappedBy = "video", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "video", fetch = FetchType.LAZY)
     private Set<VideoHashtag> videoHashtags = new HashSet<>();
 
     @Builder
