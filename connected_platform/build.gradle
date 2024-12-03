@@ -41,7 +41,7 @@ dependencies {
 	implementation 'io.jsonwebtoken:jjwt-jackson:0.12.3'
 
 	//gstreamer
-	implementation 'org.freedesktop.gstreamer:gstreamer-java:1.5.2'
+	//implementation 'org.freedesktop.gstreamer:gstreamer-java:1.5.2'
 
 	//rate limit
 	implementation group: 'com.github.vladimir-bukhtoyarov', name: 'bucket4j-core', version: '7.0.0'
