@@ -8,5 +8,6 @@ public enum Category {
     MEXICAN_FOOD,
     SNACK_BAR,
     DESSERT,
-    VEGETARIAN
+    VEGETARIAN,
+    ETC
 }
