@@ -120,7 +120,7 @@ public class VideoController {
     //검색
     @GetMapping("/search")
     @Operation(summary = "제목, 요리명, 재료명으로 검색")
-    public SuccessResponse<ListResult<VideoResponse>> search(@RequestParam String query){
+    public SuccessResponse<ListResult<VideoResponse>> search(@RequestParam("query") String query){
         ListResult<VideoResponse> result = videoService.searchVideos(query);
         return SuccessResponse.ok(result);
     }
