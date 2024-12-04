@@ -60,7 +60,7 @@ public class VideoController {
     @Operation(summary = "영상 수정")
     public SuccessResponse<SingleResult<VideoResponse>> update(
             @Valid @RequestBody VideoUpdateRequest request,
-            HttpServletRequest httpServletRequest){
+            HttpServletRequest httpServletRequest) {
 
         //Http 헤더의 Authorization에서 토큰 추출
         String token = httpServletRequest.getHeader("Authorization");
@@ -82,7 +82,7 @@ public class VideoController {
     @Operation(summary = "영상 삭제")
     public SuccessResponse<SingleResult<Long>> delete(
             @PathVariable("videoId") Long id,
-            HttpServletRequest httpServletRequest){
+            HttpServletRequest httpServletRequest) {
 
         //Http 헤더의 Authorization에서 토큰 추출
         String token = httpServletRequest.getHeader("Authorization");
@@ -103,7 +103,7 @@ public class VideoController {
     @GetMapping("/{category}")
     @Operation(summary = "카테고리별 조회")
     public SuccessResponse<ListResult<VideoResponse>> getVideosByCategory(
-            @PathVariable("category")Category category){
+            @PathVariable("category") Category category) {
         ListResult<VideoResponse> result = videoService.getVideosByCategory(category);
         return SuccessResponse.ok(result);
     }
@@ -114,6 +114,14 @@ public class VideoController {
     public SuccessResponse<ListResult<VideoResponse>> getVideosByUserId(
             @PathVariable("userId") Long id) {
         ListResult<VideoResponse> result = videoService.getVideosByUserId(id);
+        return SuccessResponse.ok(result);
+    }
+
+    //검색
+    @GetMapping("/search")
+    @Operation(summary = "제목, 요리명, 재료명으로 검색")
+    public SuccessResponse<ListResult<VideoResponse>> search(@RequestParam String query){
+        ListResult<VideoResponse> result = videoService.searchVideos(query);
         return SuccessResponse.ok(result);
     }
 }

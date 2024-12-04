@@ -28,6 +28,12 @@ public record VideoCreateRequest(
     Set<String> hashtags,
     @NotNull
     @Schema(description = "음식 카테고리", example = "KOREAN_FOOD")
-    Category category
+    Category category,
+    @NotBlank
+    @Schema(description = "요리명", example = "연어 스테이크")
+    String foodName,
+    @NotNull
+    @Schema(description = "재료명", example = "[\"연어\", \"후추\"]")
+    Set<String> ingredients
 ) {
 }
