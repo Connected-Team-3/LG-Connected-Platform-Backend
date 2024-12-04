@@ -1,6 +1,7 @@
 package lg.connected_platform.video.service;
 
 import jakarta.transaction.Transactional;
+import lg.connected_platform.food.entity.Food;
 import lg.connected_platform.global.dto.response.result.ListResult;
 import lg.connected_platform.global.dto.response.result.SingleResult;
 import lg.connected_platform.global.exception.CustomException;
@@ -38,6 +39,7 @@ public class VideoService {
     private final VideoHashtagRepository videoHashtagRepository;
 
     //영상 업로드 -> 회원 여부 확인 필요
+    @Transactional
     public SingleResult<Long> save(VideoCreateRequest request, String token){
         //업로더와 업로드 요청 회원이 같아야 함
         Long currentUserId = authService.getUserIdFromToken(token);
@@ -50,7 +52,12 @@ public class VideoService {
         User uploader = userRepository.findById(request.uploaderId())
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_EXIST));
 
-        Video newVideo = VideoMapper.from(request, uploader, new HashSet<>());
+        //Food 생성 및 설정
+        Food food = new Food();
+        food.setName(request.foodName());
+        food.setIngredients(request.ingredients());
+
+        Video newVideo = VideoMapper.from(request, uploader, new HashSet<>(), food);
         newVideo = videoRepository.save(newVideo);
 
         Set<VideoHashtag> tmp = new HashSet<>();
@@ -62,7 +69,7 @@ public class VideoService {
             videoHashtagRepository.save(videoHashtag);
             tmp.add(videoHashtag);
         });
-        System.out.println(tmp);
+        //System.out.println(tmp);
 
         newVideo.setVideoHashtags(tmp);
 
@@ -100,6 +107,11 @@ public class VideoService {
 
         User uploader = userRepository.findById(request.uploaderId())
                 .orElseThrow(()-> new CustomException(ErrorCode.USER_NOT_EXIST));
+
+        // Food 업데이트
+        Food food = video.getFood();
+        food.setName(request.foodName());
+        food.setIngredients(request.ingredients());
 
         uploader.getVideos().remove(video);
 
@@ -175,5 +187,14 @@ public class VideoService {
                 .toList();
 
         return ResponseService.getListResult(videos);
+    }
+
+    //검색 : 영상 제목, 요리명, 재료명
+    public ListResult<VideoResponse> searchVideos(String searchTerm){
+        List<Video> videos = videoRepository.searchByTitleOrFoodOrIngredients(searchTerm);
+        List<VideoResponse> responses = videos.stream()
+                .map(VideoResponse::of)
+                .toList();
+        return ResponseService.getListResult(responses);
     }
 }

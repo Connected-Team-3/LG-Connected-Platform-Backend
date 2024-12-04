@@ -3,6 +3,7 @@ package lg.connected_platform.video.entity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lg.connected_platform.common.entity.TimeStamp;
+import lg.connected_platform.food.entity.Food;
 import lg.connected_platform.hashtag.entity.Hashtag;
 import lg.connected_platform.playlist.entity.Playlist;
 import lg.connected_platform.user.entity.User;
@@ -47,6 +48,10 @@ public class Video extends TimeStamp {
     @OneToMany(mappedBy = "video", fetch = FetchType.LAZY)
     private Set<VideoHashtag> videoHashtags = new HashSet<>();
 
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    @JoinColumn(name = "food_id")
+    private Food food;
+
     @Builder
     public Video(
             Long id,
@@ -56,7 +61,8 @@ public class Video extends TimeStamp {
             String sourceUrl,
             String thumbUrl,
             Set<VideoHashtag> videoHashtags,
-            Category category
+            Category category,
+            Food food
     ){
         this.id = id;
         this.title = title;
@@ -66,6 +72,7 @@ public class Video extends TimeStamp {
         this.thumbUrl = thumbUrl;
         this.videoHashtags = videoHashtags;
         this.category = category;
+        this.food = food;
     }
 
     public Video update(VideoUpdateRequest request, Set<VideoHashtag> videoHashtags){
