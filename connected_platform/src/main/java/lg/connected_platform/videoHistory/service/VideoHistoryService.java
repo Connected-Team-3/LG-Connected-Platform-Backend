@@ -116,4 +116,15 @@ public class VideoHistoryService {
         videoHistoryRepository.deleteById(id);
         return ResponseService.getSingleResult(videoHistory.getId());
     }
+
+    //videoId와 userId로 videoHistory 찾기
+    public SingleResult<VideoHistoryResponse> getHistoryByVideoAndUser(Long videoId, String token){
+        //토큰에서 현자 userId 추출
+        Long currentUserId = authService.getUserIdFromToken(token);
+
+        VideoHistory videoHistory = videoHistoryRepository.findByUserIdAndVideoId(currentUserId, videoId)
+                .orElseThrow(() -> new CustomException(ErrorCode.HISTORY_NOT_EXIST));
+
+        return ResponseService.getSingleResult(VideoHistoryResponse.of(videoHistory));
+    }
 }

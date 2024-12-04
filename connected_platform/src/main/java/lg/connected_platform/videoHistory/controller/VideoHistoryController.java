@@ -105,4 +105,25 @@ public class VideoHistoryController {
         SingleResult<Long> result = videoHistoryService.deleteById(id, token);
         return SuccessResponse.ok(result);
     }
+
+    //videoId와 userId로 videoHistory 찾기
+    @GetMapping("/getHistoryByVideo/{videoId}")
+    @Operation(summary = "videoId와 userId로 시청 기록 조회")
+    public SuccessResponse<SingleResult<VideoHistoryResponse>> getHistoryByVideoAndUser(
+            @PathVariable("videoId") Long videoId,
+            HttpServletRequest httpServletRequest){
+        //Http 헤더의 Authorization에서 토큰 추출
+        String token = httpServletRequest.getHeader("Authorization");
+
+        if (token == null || !token.startsWith("Bearer ")) {
+            // 토큰이 없거나 형식이 올바르지 않을 경우 예외 처리
+            throw new CustomException(ErrorCode.UNAUTHORIZED);
+        }
+
+        // "Bearer " 부분 제거
+        token = token.substring(7);
+
+        SingleResult<VideoHistoryResponse> result = videoHistoryService.getHistoryByVideoAndUser(videoId, token);
+        return SuccessResponse.ok(result);
+    }
 }
