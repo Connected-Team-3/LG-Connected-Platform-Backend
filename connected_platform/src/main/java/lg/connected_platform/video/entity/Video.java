@@ -48,7 +48,7 @@ public class Video extends TimeStamp {
     @OneToMany(mappedBy = "video", fetch = FetchType.LAZY)
     private Set<VideoHashtag> videoHashtags = new HashSet<>();
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     @JoinColumn(name = "food_id")
     private Food food;
 
