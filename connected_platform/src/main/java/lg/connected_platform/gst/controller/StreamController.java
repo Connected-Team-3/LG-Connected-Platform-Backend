@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.annotation.PostConstruct;
 import lg.connected_platform.video.entity.Video;
 import lg.connected_platform.video.repository.VideoRepository;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +31,7 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @RestController
 @CrossOrigin(origins = "http://localhost:3000")
@@ -37,9 +39,16 @@ import java.util.Map;
 @RequestMapping("/api/stream")
 @RequiredArgsConstructor
 public class StreamController {
-    private final Map<Long, Pipeline> pipelines = new HashMap<>(); //videoId별로 파이프라인 관리
-    private final Map<Long, Path> playlistRoots = new HashMap<>(); //videoId별로 hls 파일 경로 관리
+    private final Map<Long, Pipeline> pipelines = new ConcurrentHashMap<>(); //videoId별로 파이프라인 관리
+    private final Map<Long, Path> playlistRoots = new ConcurrentHashMap<>(); //videoId별로 hls 파일 경로 관리
     private final VideoRepository videoRepository;
+
+    @PostConstruct
+    public void initGStreamer() {
+        System.setProperty("GST_DEBUG", "3");
+        Gst.init(Version.of(1, 16), "HLS");
+        Utils.configurePaths();
+    }
 
     @PostMapping("/start")
     @Operation(summary = "스트리밍 시작", description = "지정된 비디오 ID로 스트리밍을 시작")
@@ -66,20 +75,20 @@ public class StreamController {
         //gstreamer 파이프라인 선언
         Pipeline pipeline;
 
-        //gstreamer 디버그 모드 설정 및 초기화
-        System.setProperty("GST_DEBUG", "3");
-        Utils.configurePaths();
-        Gst.init(Version.of(1, 16), "HLS");
-
 
         //영상의 해상도 감지
         Element probeElement = Gst.parseLaunch("uridecodebin uri=" + videoSourceUrl);
-        Pad pad = probeElement.getStaticPad("src");
-        Caps caps = pad.getCurrentCaps();
-        Structure structure = caps.getStructure(0);
-        int width = structure.getInteger("width");
-        int height = structure.getInteger("height");
-        System.out.println("Input video resolution" + width + "x" + height);
+        int width, height;
+        try {
+            Pad pad = probeElement.getStaticPad("src");
+            Caps caps = pad.getCurrentCaps();
+            Structure structure = caps.getStructure(0);
+            width = structure.getInteger("width");
+            height = structure.getInteger("height");
+            System.out.println("Input video resolution: " + width + "x" + height);
+        } finally {
+            probeElement.dispose();
+        }
 
 
         //영상의 해상도를 기반으로 gstreamer 파이프라인 설정
@@ -141,7 +150,7 @@ public class StreamController {
         //파이프라인 실행
         pipeline.play();
 
-        return "Streaming started successfully! Access at /hls/playlist.m3u8";
+        return "Streaming started successfully! Access at /hls_" + videoId + "/master_playlist.m3u8";
     }
 
 
