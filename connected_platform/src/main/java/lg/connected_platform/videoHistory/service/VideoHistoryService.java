@@ -34,16 +34,16 @@ public class VideoHistoryService {
         //시청 기록 생성 요청 회원과 시청한 회원이 같아야 함
         Long currentUserId = authService.getUserIdFromToken(token);
 
-        if(!currentUserId.equals(request.userId())){
+        /*if(!currentUserId.equals(request.userId())){
             throw new CustomException(ErrorCode.USER_MISMATCH);
-        }
+        }*/
 
 
         //videoHistory가 존재하는지 확인하고 없으면 생성
-        VideoHistory videoHistory = videoHistoryRepository.findByUserIdAndVideoId(request.userId(), request.videoId())
+        VideoHistory videoHistory = videoHistoryRepository.findByUserIdAndVideoId(currentUserId, request.videoId())
                 .orElseGet(()->{
                     //새로운 VideoHistory 생성
-                    User user = userRepository.findById(request.userId())
+                    User user = userRepository.findById(currentUserId)
                             .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_EXIST));
                     Video video = videoRepository.findById(request.videoId())
                             .orElseThrow(()-> new CustomException(ErrorCode.VIDEO_NOT_EXIST));
@@ -54,7 +54,7 @@ public class VideoHistoryService {
                             .build();
                 });
 
-        User user = userRepository.findById(request.userId())
+        User user = userRepository.findById(currentUserId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_EXIST));
         user.getVideoHistories().add(videoHistory);
 
@@ -78,15 +78,15 @@ public class VideoHistoryService {
     }
 
     //유저의 전체 시청 기록 조회
-    public ListResult<VideoHistoryResponse> getUserVideoHistories(Long userId, String token){
+    public ListResult<VideoHistoryResponse> getUserVideoHistories(String token){
         //시청 기록 조회 요청 회원과 토큰에 저장된 회원이 같아야 함
         Long currentUserId = authService.getUserIdFromToken(token);
 
-        if(!currentUserId.equals(userId)){
+        /*if(!currentUserId.equals(userId)){
             throw new CustomException(ErrorCode.USER_MISMATCH);
-        }
+        }*/
 
-        User user = userRepository.findById(userId)
+        User user = userRepository.findById(currentUserId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_EXIST));
 
         List<VideoHistoryResponse> histories = user.getVideoHistories().stream()

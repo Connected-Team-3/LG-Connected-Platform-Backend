@@ -3,3 +3,9 @@ spring:
     active: local
     group:
       local: db
+logging:
+  level:
+    root: INFO
+    org.springframework.web: DEBUG
+    org.springframework.boot.actuate: DEBUG
+    org.apache.catalina: DEBUG
