@@ -9,9 +9,6 @@ public record PlaylistUpdateRequest(
         @Schema(description = "playlist id", example = "1")
         Long id,
         @NotNull
-        @Schema(description = "user id", example = "1")
-        Long userId,
-        @NotNull
         @Schema(description = "video id", example = "1")
         Long videoId,
         @NotBlank

@@ -37,13 +37,13 @@ public class PlaylistService {
     public SingleResult<Long> create(PlaylistCreateRequest request, String token){
         //요청에 담긴 유저와 인증된 유저가 같아야 함
         Long currentUserId = authService.getUserIdFromToken(token);
-
+/*
         if(!currentUserId.equals(request.userId())){
             throw new CustomException(ErrorCode.USER_MISMATCH);
-        }
+        }*/
 
         //유저 조회
-        User user = userRepository.findById(request.userId())
+        User user = userRepository.findById(currentUserId)
                 .orElseThrow(()-> new CustomException(ErrorCode.USER_NOT_EXIST));
 
         Playlist newPlaylist = PlaylistMapper.from(request, user);
@@ -81,10 +81,10 @@ public class PlaylistService {
 
         //요청에 담긴 유저와 인증된 유저가 같아야 함
         Long currentUserId = authService.getUserIdFromToken(token);
-
+/*
         if(!currentUserId.equals(request.userId())){
             throw new CustomException(ErrorCode.USER_MISMATCH);
-        }
+        }*/
 
         Playlist playlist = playlistRepository.findById(request.id())
                 .orElseThrow(()-> new CustomException(ErrorCode.PLAYLIST_NOT_EXIST));
@@ -92,7 +92,7 @@ public class PlaylistService {
         Video video = videoRepository.findById(request.videoId())
                 .orElseThrow(()-> new CustomException(ErrorCode.VIDEO_NOT_EXIST));
 
-        User user = userRepository.findById(request.userId())
+        User user = userRepository.findById(currentUserId)
                 .orElseThrow(()-> new CustomException(ErrorCode.USER_NOT_EXIST));
 
         //유저에서 기존의 플레이리스트 삭제
