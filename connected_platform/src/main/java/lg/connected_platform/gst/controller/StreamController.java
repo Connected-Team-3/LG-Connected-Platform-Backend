@@ -45,9 +45,62 @@ public class StreamController {
 
     @PostConstruct
     public void initGStreamer() {
-        System.setProperty("GST_DEBUG", "3");
+        System.setProperty("GST_DEBUG", "4");
+        //System.setProperty("java.library.path", "C:\\gstreamer\\1.0\\msvc_x86_64\\bin");
         Gst.init(Version.of(1, 16), "HLS");
         Utils.configurePaths();
+    }
+
+    private void configureSink(Element sink, Path playlistLocation, Path segmentLocation) {
+        sink.set("playlist-location", playlistLocation.toString());
+        sink.set("location", segmentLocation.toString());
+    }
+
+    public int[] getVideoResolution(String videoSourceUrl) {
+        int[] resolution = {0, 0}; // Default resolution in case of failure
+
+        try {
+            // GStreamer 파이프라인 생성
+            Element source = ElementFactory.make("uridecodebin", "source");
+            Element sink = ElementFactory.make("fakesink", "sink");
+
+            // 소스 URL 설정
+            source.set("uri", videoSourceUrl);
+
+            // 파이프라인 생성 및 요소 추가
+            Pipeline pipeline = new Pipeline();
+            pipeline.addMany(source, sink);
+            Element.linkMany(source, sink);
+
+            // Pad가 추가되었을 때 처리
+            source.connect((Element.PAD_ADDED) (element, pad) -> {
+                try {
+                    // 캡스를 통해 해상도 추출
+                    Caps caps = pad.getCurrentCaps();
+                    if (caps != null) {
+                        Structure struct = caps.getStructure(0);
+                        if (struct.hasField("width") && struct.hasField("height")) {
+                            resolution[0] = struct.getInteger("width");
+                            resolution[1] = struct.getInteger("height");
+                            System.out.println("Detected resolution: " + resolution[0] + "x" + resolution[1]);
+                        }
+                    }
+                } catch (Exception e) {
+                    System.err.println("Error extracting resolution: " + e.getMessage());
+                }
+            });
+
+            // 파이프라인 실행
+            pipeline.play();
+
+            // 파이프라인 실행 후 잠시 대기
+            Thread.sleep(3000); // 3초 대기
+            pipeline.stop();
+        } catch (Exception e) {
+            System.err.println("Error initializing pipeline: " + e.getMessage());
+        }
+
+        return resolution;
     }
 
     @PostMapping("/start")
@@ -67,9 +120,16 @@ public class StreamController {
         Video video = videoRepository.findById(videoId)
                         .orElseThrow(()-> new RuntimeException("Video not found"));
         String videoSourceUrl = video.getSourceUrl();
+        System.out.println(videoSourceUrl);
 
         //hls 파일 저장 디렉토리 경로 설정
-        Path playlistRoot = Files.createTempDirectory("hls_" + videoId);
+        //Path playlistRoot = Files.createTempDirectory("hls_" + videoId);
+        Path projectRoot = Paths.get(System.getProperty("user.dir")); // 현재 프로젝트 디렉토리
+        Path hlsDir = projectRoot.resolve("hls"); // hls 폴더 설정
+        Files.createDirectories(hlsDir); // hls 폴더 생성
+        Path playlistRoot = hlsDir.resolve("hls_" + videoId); // videoId별 폴더 생성
+        Files.createDirectories(playlistRoot); // videoId별 폴더 생성
+        System.out.println(playlistRoot);
         playlistRoots.put(videoId, playlistRoot);
 
         //gstreamer 파이프라인 선언
@@ -77,22 +137,36 @@ public class StreamController {
 
 
         //영상의 해상도 감지
-        Element probeElement = Gst.parseLaunch("uridecodebin uri=" + videoSourceUrl);
-        int width, height;
-        try {
-            Pad pad = probeElement.getStaticPad("src");
-            Caps caps = pad.getCurrentCaps();
-            Structure structure = caps.getStructure(0);
-            width = structure.getInteger("width");
-            height = structure.getInteger("height");
-            System.out.println("Input video resolution: " + width + "x" + height);
-        } finally {
-            probeElement.dispose();
-        }
+        /*Element probeElement = Gst.parseLaunch("uridecodebin uri=" + videoSourceUrl);
+        int[] resolution = new int[2]; // Array to store width and height
+        probeElement.connect((Element.PAD_ADDED) (element, pad) -> {
+            pad.addProbe(PadProbeType.BLOCK_DOWNSTREAM, (Pad.PROBE) (pad1, info) -> {
+                try {
+                    Caps caps = pad.getCurrentCaps();
+                    if (caps != null && caps.size() > 0) {
+                        Structure structure = caps.getStructure(0);
+                        resolution[0] = structure.getInteger("width");
+                        resolution[1] = structure.getInteger("height");
+                        System.out.println("Input video resolution: " + resolution[0] + "x" + resolution[1]);
+                    } else {
+                        System.err.println("Failed to detect video resolution: Caps are null or empty.");
+                    }
+                } catch (Exception e) {
+                    System.err.println("Failed to detect video resolution: " + e.getMessage());
+                } finally {
+                    probeElement.dispose();
+                }
+                return PadProbeReturn.REMOVE;
+            });
+        });*/
+
+        int[] resolution = getVideoResolution(videoSourceUrl);
+        System.out.println("Video resolution: " + resolution[0] + "x" + resolution[1]);
+
 
 
         //영상의 해상도를 기반으로 gstreamer 파이프라인 설정
-        if(height <= 480){
+        if(resolution[1] <= 480){
             //영상 자체의 해상도가 낮은 경우 : low, medium만 지원
             pipeline = (Pipeline) Gst.parseLaunch(
                     "uridecodebin uri=" + videoSourceUrl + " ! tee name=t "
@@ -110,6 +184,24 @@ public class StreamController {
             );
         }
 
+        /*Element lowSink = pipeline.getElementByName("low_sink");
+        Element mediumSink = pipeline.getElementByName("medium_sink");
+        Element highSink = pipeline.getElementByName("high_sink");
+
+        if(resolution[1] <= 480){
+            lowSink.getStaticPad("sink").addProbe(PadProbeType.BUFFER, new Renderer(640, 360));
+            mediumSink.getStaticPad("sink").addProbe(PadProbeType.BUFFER, new Renderer(1280, 720));
+        }
+        else{
+            lowSink.getStaticPad("sink").addProbe(PadProbeType.BUFFER, new Renderer(640, 360));
+            mediumSink.getStaticPad("sink").addProbe(PadProbeType.BUFFER, new Renderer(1280, 720));
+            highSink.getStaticPad("sink").addProbe(PadProbeType.BUFFER, new Renderer(1920, 1080));
+        }*/
+
+        // Configure sinks
+        configureSink(pipeline.getElementByName("low_sink"), playlistRoot.resolve("low_playlist.m3u8"), playlistRoot.resolve("low_%05d.ts"));
+        configureSink(pipeline.getElementByName("medium_sink"), playlistRoot.resolve("medium_playlist.m3u8"), playlistRoot.resolve("medium_%05d.ts"));
+        configureSink(pipeline.getElementByName("high_sink"), playlistRoot.resolve("high_playlist.m3u8"), playlistRoot.resolve("high_%05d.ts"));
         pipelines.put(videoId, pipeline);
 
 
@@ -126,7 +218,7 @@ public class StreamController {
 
         //마스터 플레이리스트 생성
         Path masterPlaylistPath = playlistRoot.resolve("master_playlist.m3u8");
-        if(height <= 480){
+        if(resolution[1] <= 480){
             Files.write(masterPlaylistPath, Arrays.asList(
                     "#EXTM3U",
                     "#EXT-X-STREAM-INF:BANDWIDTH=500000,RESOLUTION=360x240",
@@ -149,6 +241,7 @@ public class StreamController {
 
         //파이프라인 실행
         pipeline.play();
+
 
         return "Streaming started successfully! Access at /hls_" + videoId + "/master_playlist.m3u8";
     }
@@ -204,7 +297,7 @@ public class StreamController {
 
 
     // 세그먼트 파일 반환
-    @GetMapping("/{segment}")
+    @GetMapping("/{videoId}/{segment}")
     @Operation(summary = "세그먼트 파일 조회", description = "세그먼트 이름에 해당하는 HLS 세그먼트(.ts)를 반환")
     public ResponseEntity<Resource> getSegment(@PathVariable("videoId") Long videoId, @PathVariable("segment") String segment) {
         Path playlistRoot = playlistRoots.get(videoId);
@@ -219,6 +312,84 @@ public class StreamController {
         }
         else{
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
+    }
+
+
+    static class Renderer implements Pad.PROBE {
+        private final BufferedImage image;
+        private final int[] data;
+        private final Point[] points;
+        private final Paint fill;
+
+        private Renderer(int width, int height) {
+            image = new BufferedImage
+                    (width, height, BufferedImage.TYPE_INT_RGB);
+            data = ((DataBufferInt) (image.getRaster().getDataBuffer())).getData();
+            points = new Point[18];
+            for (int i = 0; i < points.length; i++) {
+                points[i] = new Point();
+            }
+            fill = new GradientPaint(0, 0, new Color(1.0f, 0.3f, 0.5f, 0.9f),
+                    60, 20, new Color(0.3f, 1.0f, 0.7f, 0.8f), true);
+        }
+
+        @Override
+        public PadProbeReturn probeCallback(Pad pad, PadProbeInfo info) {
+            Buffer buffer = info.getBuffer();
+
+            if (buffer.isWritable()) {
+                IntBuffer ib = buffer.map(true).asIntBuffer();
+                ib.get(data);
+                render();
+                ib.rewind();
+                ib.put(data);
+                buffer.unmap();
+            }
+            return PadProbeReturn.OK;
+        }
+
+        private void render() {
+            Graphics2D g2d = image.createGraphics();
+            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                    RenderingHints.VALUE_ANTIALIAS_ON);
+            for (Point point : points) {
+                point.tick();
+            }
+            GeneralPath path = new GeneralPath();
+            path.moveTo(points[0].x, points[0].y);
+            for (int i = 2; i < points.length; i += 2) {
+                path.quadTo(points[i - 1].x, points[i - 1].y,
+                        points[i].x, points[i].y);
+            }
+            path.closePath();
+            path.transform(AffineTransform.getScaleInstance(image.getWidth(), image.getHeight()));
+            g2d.setPaint(fill);
+            g2d.fill(path);
+            g2d.setColor(Color.BLACK);
+            g2d.draw(path);
+        }
+    }
+
+    static class Point {
+        private double x, y, dx, dy;
+
+        private Point() {
+            this.x = Math.random();
+            this.y = Math.random();
+            this.dx = 0.02 * Math.random();
+            this.dy = 0.02 * Math.random();
+        }
+
+        private void tick() {
+            x += dx;
+            y += dy;
+            if (x < 0 || x > 1) {
+                dx = -dx;
+            }
+            if (y < 0 || y > 1) {
+                dy = -dy;
+            }
         }
     }
 

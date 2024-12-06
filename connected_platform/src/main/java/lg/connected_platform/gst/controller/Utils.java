@@ -36,6 +36,7 @@ class Utils {
     static void configurePaths() {
         if (Platform.isWindows()) {
             String gstPath = System.getProperty("gstreamer.path", findWindowsLocation());
+            //String gstPath = "C:\\gstreamer\\1.0\\msvc_x86_64\\bin";
             if (!gstPath.isEmpty()) {
                 String systemPath = System.getenv("PATH");
                 if (systemPath == null || systemPath.trim().isEmpty()) {

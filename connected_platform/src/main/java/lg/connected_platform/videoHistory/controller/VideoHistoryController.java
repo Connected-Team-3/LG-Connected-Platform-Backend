@@ -68,7 +68,6 @@ public class VideoHistoryController {
     @GetMapping("/getHistories/{userId}")
     @Operation(summary = "유저의 영상 시청 기록 전체 조회")
     public SuccessResponse<ListResult<VideoHistoryResponse>> getHistories(
-            @PathVariable("userId") Long id,
             HttpServletRequest httpServletRequest){
         //Http 헤더의 Authorization에서 토큰 추출
         String token = httpServletRequest.getHeader("Authorization");
@@ -81,7 +80,7 @@ public class VideoHistoryController {
         // "Bearer " 부분 제거
         token = token.substring(7);
 
-        ListResult<VideoHistoryResponse> result = videoHistoryService.getUserVideoHistories(id, token);
+        ListResult<VideoHistoryResponse> result = videoHistoryService.getUserVideoHistories(token);
         return SuccessResponse.ok(result);
     }
 

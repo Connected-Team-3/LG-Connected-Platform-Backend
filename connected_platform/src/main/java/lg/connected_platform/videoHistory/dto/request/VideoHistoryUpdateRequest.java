@@ -9,9 +9,6 @@ import java.time.LocalDateTime;
 
 public record VideoHistoryUpdateRequest(
         @NotNull
-        @Schema(description = "user id", example = "1")
-        Long userId,
-        @NotNull
         @Schema(description = "video id", example = "1")
         Long videoId,
         @NotNull
