@@ -82,7 +82,7 @@ public class StreamController {
                         if (struct.hasField("width") && struct.hasField("height")) {
                             resolution[0] = struct.getInteger("width");
                             resolution[1] = struct.getInteger("height");
-                            System.out.println("Detected resolution: " + resolution[0] + "x" + resolution[1]);
+                            //System.out.println("Detected resolution: " + resolution[0] + "x" + resolution[1]);
                         }
                     }
                 } catch (Exception e) {
@@ -120,7 +120,7 @@ public class StreamController {
         Video video = videoRepository.findById(videoId)
                         .orElseThrow(()-> new RuntimeException("Video not found"));
         String videoSourceUrl = video.getSourceUrl();
-        System.out.println(videoSourceUrl);
+        //System.out.println(videoSourceUrl);
 
         //hls 파일 저장 디렉토리 경로 설정
         //Path playlistRoot = Files.createTempDirectory("hls_" + videoId);
@@ -137,31 +137,8 @@ public class StreamController {
 
 
         //영상의 해상도 감지
-        /*Element probeElement = Gst.parseLaunch("uridecodebin uri=" + videoSourceUrl);
-        int[] resolution = new int[2]; // Array to store width and height
-        probeElement.connect((Element.PAD_ADDED) (element, pad) -> {
-            pad.addProbe(PadProbeType.BLOCK_DOWNSTREAM, (Pad.PROBE) (pad1, info) -> {
-                try {
-                    Caps caps = pad.getCurrentCaps();
-                    if (caps != null && caps.size() > 0) {
-                        Structure structure = caps.getStructure(0);
-                        resolution[0] = structure.getInteger("width");
-                        resolution[1] = structure.getInteger("height");
-                        System.out.println("Input video resolution: " + resolution[0] + "x" + resolution[1]);
-                    } else {
-                        System.err.println("Failed to detect video resolution: Caps are null or empty.");
-                    }
-                } catch (Exception e) {
-                    System.err.println("Failed to detect video resolution: " + e.getMessage());
-                } finally {
-                    probeElement.dispose();
-                }
-                return PadProbeReturn.REMOVE;
-            });
-        });*/
-
         int[] resolution = getVideoResolution(videoSourceUrl);
-        System.out.println("Video resolution: " + resolution[0] + "x" + resolution[1]);
+        //System.out.println("Video resolution: " + resolution[0] + "x" + resolution[1]);
 
 
 
@@ -183,20 +160,6 @@ public class StreamController {
                             + "t. ! queue ! videoscale ! video/x-raw,width=1920,height=1080 ! x264enc bitrate=4000 ! hlssink2 name=high_sink location=" + playlistRoot.resolve("high_%05d.ts") + " playlist-location=" + playlistRoot.resolve("high_playlist.m3u8")
             );
         }
-
-        /*Element lowSink = pipeline.getElementByName("low_sink");
-        Element mediumSink = pipeline.getElementByName("medium_sink");
-        Element highSink = pipeline.getElementByName("high_sink");
-
-        if(resolution[1] <= 480){
-            lowSink.getStaticPad("sink").addProbe(PadProbeType.BUFFER, new Renderer(640, 360));
-            mediumSink.getStaticPad("sink").addProbe(PadProbeType.BUFFER, new Renderer(1280, 720));
-        }
-        else{
-            lowSink.getStaticPad("sink").addProbe(PadProbeType.BUFFER, new Renderer(640, 360));
-            mediumSink.getStaticPad("sink").addProbe(PadProbeType.BUFFER, new Renderer(1280, 720));
-            highSink.getStaticPad("sink").addProbe(PadProbeType.BUFFER, new Renderer(1920, 1080));
-        }*/
 
         // Configure sinks
         configureSink(pipeline.getElementByName("low_sink"), playlistRoot.resolve("low_playlist.m3u8"), playlistRoot.resolve("low_%05d.ts"));
