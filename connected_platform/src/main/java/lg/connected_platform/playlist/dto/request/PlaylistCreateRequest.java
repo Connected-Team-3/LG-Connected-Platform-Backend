@@ -8,9 +8,6 @@ import java.util.List;
 
 public record PlaylistCreateRequest(
         @NotNull
-        @Schema(description = "user id", example = "1")
-        Long userId,
-        @NotNull
         @Schema(description = "영상 목록", example = "[1, 2, 3]")
         List<Long> videoIdList,
         @NotBlank
