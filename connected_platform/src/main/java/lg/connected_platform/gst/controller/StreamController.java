@@ -25,9 +25,8 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.ByteOrder;
 import java.nio.IntBuffer;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -209,20 +208,48 @@ public class StreamController {
         return "Streaming started successfully! Access at /hls_" + videoId + "/master_playlist.m3u8";
     }
 
+    // 스트리밍 종료 시 임시 파일 삭제
+    private void cleanUpTempFiles(Path playlistRoot) {
+        try {
+            // 모든 .goutputstream-~~~ 임시 파일을 삭제
+            Files.walkFileTree(playlistRoot, new SimpleFileVisitor<Path>() {
+                @Override
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                    if (file.getFileName().toString().startsWith(".goutputstream")) {
+                        Files.delete(file);
+                        System.out.println("Deleted temporary file: " + file);
+                    }
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
+                    return FileVisitResult.CONTINUE;
+                }
+            });
+        } catch (IOException e) {
+            System.err.println("Failed to delete temporary files: " + e.getMessage());
+        }
+    }
 
     //스트리밍 중단
     @PostMapping("/stop")
     @Operation(summary = "스트리밍 중단", description = "현재 활성화된 스트리밍을 중단")
-    public String stopStreaming(@RequestParam("videoId") Long videoId) {
+    public String stopStreaming(@RequestParam("videoId") Long videoId) throws InterruptedException {
         Pipeline pipeline = pipelines.remove(videoId);
         if (pipeline != null) {
             //파이프라인 중단
             pipeline.stop();
             Gst.quit();
+            Thread.sleep(1000);  // 1초 정도 대기하여 파일이 완전히 닫히도록 함
         }
 
-        //hls 파일 정리
         Path playlistRoot = playlistRoots.remove(videoId);
+
+        // 임시 파일 정리
+        cleanUpTempFiles(playlistRoot);
+
+        //hls 파일 정리
         if(playlistRoot != null) {
             try {
                 Files.walk(playlistRoot)
