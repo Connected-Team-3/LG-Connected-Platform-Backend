@@ -37,6 +37,6 @@ public class S3Config {
             public String secretAccessKey() {
                 return accessSecret;
             }
-        }
+        };
     }
 }
