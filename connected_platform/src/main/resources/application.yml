@@ -9,3 +9,14 @@ logging:
     org.springframework.web: DEBUG
     org.springframework.boot.actuate: DEBUG
     org.apache.catalina: DEBUG
+cloud:
+  aws:
+    s3:
+      bucket: ${BUCKET_NAME}
+    region :
+      static : ap-northeast-2
+    stack:
+      auto: false
+    credentials:
+      accessKey: ${ACCESS_KEY}
+      secretKey: ${SECRET_KEY}

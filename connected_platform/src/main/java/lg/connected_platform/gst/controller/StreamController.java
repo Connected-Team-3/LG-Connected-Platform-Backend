@@ -33,7 +33,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @RestController
-@CrossOrigin(origins = "http://localhost:3000")
+//@CrossOrigin(origins = "http://localhost:3000")
 @Tag(name = "스트리밍(Stream)")
 @RequestMapping("/api/stream")
 @RequiredArgsConstructor

@@ -48,6 +48,9 @@ dependencies {
 	implementation 'org.slf4j:slf4j-simple:1.7.30'
 	implementation 'org.webjars.npm:hls.js:1.0.7'
 
+	//s3
+	implementation 'io.awspring.cloud:spring-cloud-aws-s3:3.0.2'
+
 	//rate limit
 	implementation group: 'com.github.vladimir-bukhtoyarov', name: 'bucket4j-core', version: '7.0.0'
 }
