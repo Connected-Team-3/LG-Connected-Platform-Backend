@@ -128,10 +128,7 @@ public class StreamController {
     public String startStreaming(@RequestParam("videoId") Long videoId) throws IOException {
         //이미 스트리밍이 진행 중인 경우
         if (pipelines.containsKey(videoId)) {
-            Path playlistRoot = playlistRoots.get(videoId);
-            String masterPlaylistUrl = "https://connectedplatform.s3.ap-northeast-2.amazonaws.com/hls/"
-                    + playlistRoot.getFileName().toString()
-                    + "/master_playlist.m3u8";
+            String masterPlaylistUrl = "https://connectedplatform.s3.ap-northeast-2.amazonaws.com/hls/hls_" + videoId + "/master_playlist.m3u8";
             return "Streaming is already running! Access it at: " + masterPlaylistUrl;
         }
         
@@ -139,16 +136,13 @@ public class StreamController {
         Video video = videoRepository.findById(videoId)
                         .orElseThrow(()-> new RuntimeException("Video not found"));
         String videoSourceUrl = video.getSourceUrl();
-        //System.out.println(videoSourceUrl);
 
         //hls 파일 저장 디렉토리 경로 설정
-        //Path playlistRoot = Files.createTempDirectory("hls_" + videoId);
         Path projectRoot = Paths.get(System.getProperty("user.dir")); // 현재 프로젝트 디렉토리
         Path hlsDir = projectRoot.resolve("hls"); // hls 폴더 설정
         Files.createDirectories(hlsDir); // hls 폴더 생성
         Path playlistRoot = hlsDir.resolve("hls_" + videoId); // videoId별 폴더 생성
         Files.createDirectories(playlistRoot); // videoId별 폴더 생성
-        //System.out.println(playlistRoot);
         playlistRoots.put(videoId, playlistRoot);
 
         //gstreamer 파이프라인 선언
@@ -157,8 +151,6 @@ public class StreamController {
 
         //영상의 해상도 감지
         int[] resolution = getVideoResolution(videoSourceUrl);
-        //System.out.println("Video resolution: " + resolution[0] + "x" + resolution[1]);
-
 
 
         //영상의 해상도를 기반으로 gstreamer 파이프라인 설정
@@ -227,10 +219,31 @@ public class StreamController {
         String bucketName = "connectedplatform";
 
         //각 hls 파일 업로드
-        Files.walk(playlistRoot).filter(Files::isRegularFile).forEach(file->{
-            String s3Key = "hls/" + playlistRoot.getFileName().toString() + "/" + playlistRoot.relativize(file).toString();
-            uploadToS3(bucketName, file, s3Key);
+        pipeline.getBus().connect((Bus.EOS) (source) -> {
+            System.out.println("End of Stream reached. Starting S3 upload...");
+
+            // S3 업로드
+            try {
+                Files.walk(playlistRoot).filter(Files::isRegularFile).forEach(file -> {
+                    String s3Key = "hls/" + playlistRoot.getFileName().toString() + "/" + playlistRoot.relativize(file).toString();
+                    uploadToS3(bucketName, file, s3Key);
+
+                    try {
+                        Files.delete(file); // 파일 삭제
+                    } catch (IOException e) {
+                        System.err.println("Failed to delete local file: " + file);
+                    }
+                });
+
+                // 디렉토리 삭제
+                Files.deleteIfExists(playlistRoot);
+            } catch (IOException e) {
+                System.err.println("Failed to upload or clean up files: " + e.getMessage());
+            }
+
+            Gst.quit();
         });
+
         return "Streaming started successfully! Access at your S3 bucket.";
     }
 
