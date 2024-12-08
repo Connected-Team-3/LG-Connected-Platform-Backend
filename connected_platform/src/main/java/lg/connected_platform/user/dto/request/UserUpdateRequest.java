@@ -9,9 +9,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public record UserUpdateRequest(
-        @NotNull
-        @Schema(description = "회원 Id", example = "1")
-        Long id,
         @NotBlank
         @Schema(description = "수정할 로그인 아이디", example = "abcd")
         String loginId,

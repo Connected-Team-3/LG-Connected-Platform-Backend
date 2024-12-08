@@ -57,11 +57,11 @@ public class UserService {
         //회원 정보 수정 요청을 하는 유저와 수정 대상인 유저가 같아야 함
         Long currentUserId = authService.getUserIdFromToken(token);
 
-        if(!currentUserId.equals(request.id())){
+        /*if(!currentUserId.equals(request.id())){
             throw new CustomException(ErrorCode.FORBIDDEN);
-        }
+        }*/
 
-        User user = userRepository.findById(request.id())
+        User user = userRepository.findById(currentUserId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_EXIST));
 
         userRepository.save(user.update(request)); //dirty checking으로 반환값 안 받아도 업데이트 반영
