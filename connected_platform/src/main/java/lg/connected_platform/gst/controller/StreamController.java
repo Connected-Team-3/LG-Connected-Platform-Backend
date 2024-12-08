@@ -14,6 +14,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import software.amazon.awssdk.services.s3.S3Client;
 
 import java.awt.*;
 import java.awt.geom.AffineTransform;
@@ -41,6 +42,21 @@ public class StreamController {
     private final Map<Long, Pipeline> pipelines = new ConcurrentHashMap<>(); //videoId별로 파이프라인 관리
     private final Map<Long, Path> playlistRoots = new ConcurrentHashMap<>(); //videoId별로 hls 파일 경로 관리
     private final VideoRepository videoRepository;
+    private final S3Client s3Client;
+
+    //s3로 세그먼트와 플레이리스트 파일 업로드
+    private void uploadToS3(String bucketName, Path filePath, String s3Key){
+        try{
+            s3Client.putObject(
+                    builder -> builder.bucket(bucketName).key(s3Key),
+                    filePath
+            );
+            System.out.println("File uploaded to S3 : " + s3Key);
+        } catch (Exception e){
+            System.out.println("Failed to upload file to S3 : " + e.getMessage());
+            throw new RuntimeException("S3 Upload Error", e);
+        }
+    }
 
     @PostConstruct
     public void initGStreamer() {
@@ -112,7 +128,11 @@ public class StreamController {
     public String startStreaming(@RequestParam("videoId") Long videoId) throws IOException {
         //이미 스트리밍이 진행 중인 경우
         if (pipelines.containsKey(videoId)) {
-            return "Streaming is already running for this video.";
+            Path playlistRoot = playlistRoots.get(videoId);
+            String masterPlaylistUrl = "https://connectedplatform.s3.ap-northeast-2.amazonaws.com/hls/"
+                    + playlistRoot.getFileName().toString()
+                    + "/master_playlist.m3u8";
+            return "Streaming is already running! Access it at: " + masterPlaylistUrl;
         }
         
         //영상 원본 url 가져오기
@@ -128,7 +148,7 @@ public class StreamController {
         Files.createDirectories(hlsDir); // hls 폴더 생성
         Path playlistRoot = hlsDir.resolve("hls_" + videoId); // videoId별 폴더 생성
         Files.createDirectories(playlistRoot); // videoId별 폴더 생성
-        System.out.println(playlistRoot);
+        //System.out.println(playlistRoot);
         playlistRoots.put(videoId, playlistRoot);
 
         //gstreamer 파이프라인 선언
@@ -204,8 +224,14 @@ public class StreamController {
         //파이프라인 실행
         pipeline.play();
 
+        String bucketName = "connectedplatform";
 
-        return "Streaming started successfully! Access at /hls_" + videoId + "/master_playlist.m3u8";
+        //각 hls 파일 업로드
+        Files.walk(playlistRoot).filter(Files::isRegularFile).forEach(file->{
+            String s3Key = "hls/" + playlistRoot.getFileName().toString() + "/" + playlistRoot.relativize(file).toString();
+            uploadToS3(bucketName, file, s3Key);
+        });
+        return "Streaming started successfully! Access at your S3 bucket.";
     }
 
     // 스트리밍 종료 시 임시 파일 삭제
@@ -247,19 +273,7 @@ public class StreamController {
         Path playlistRoot = playlistRoots.remove(videoId);
 
         // 임시 파일 정리
-        cleanUpTempFiles(playlistRoot);
-
-        //hls 파일 정리
-        if(playlistRoot != null) {
-            try {
-                Files.walk(playlistRoot)
-                        .map(Path::toFile)
-                        .forEach(File::delete);
-                Files.delete(playlistRoot);
-            } catch (IOException e) {
-                System.err.println("Streaming stopped, but failed to delete HLS files : " + e.getMessage());
-            }
-        }
+        //cleanUpTempFiles(playlistRoot);
 
         return "Streaming stopped successfully!";
     }
@@ -268,41 +282,35 @@ public class StreamController {
     //master_playlist.m3u8 파일 반환
     @GetMapping("/{videoId}/master_playlist.m3u8")
     @Operation(summary = "마스터 플레이리스트 조회", description = "비디오 ID에 해당하는 마스터 플레이리스트(.m3u8)를 반환")
-    public ResponseEntity<Resource> getMasterPlaylist(@PathVariable("videoId") Long videoId) {
+    public ResponseEntity<String> getMasterPlaylist(@PathVariable("videoId") Long videoId) {
         Path playlistRoot = playlistRoots.get(videoId);
         if(playlistRoot == null){
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Master playlist not found");
         }
 
-        Path playlistPath = playlistRoot.resolve("master_playlist.m3u8");
+        String masterPlaylistUrl = "https://connectedplatform.s3.ap-northeast-2.amazonaws.com/hls/"
+                + playlistRoot.getFileName().toString()
+                + "/master_playlist.m3u8";
 
-        if(Files.exists(playlistPath)){
-            return ResponseEntity.ok().body(new PathResource(playlistPath));
-        }
-        else{
-            //파일이 없으면 404 반환
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-        }
+        return ResponseEntity.ok(masterPlaylistUrl);
     }
 
 
     // 세그먼트 파일 반환
     @GetMapping("/{videoId}/{segment}")
     @Operation(summary = "세그먼트 파일 조회", description = "세그먼트 이름에 해당하는 HLS 세그먼트(.ts)를 반환")
-    public ResponseEntity<Resource> getSegment(@PathVariable("videoId") Long videoId, @PathVariable("segment") String segment) {
+    public ResponseEntity<String> getSegment(@PathVariable("videoId") Long videoId, @PathVariable("segment") String segment) {
         Path playlistRoot = playlistRoots.get(videoId);
         if(playlistRoot == null){
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Segment not found");
         }
 
-        Path segmentPath = playlistRoot.resolve(segment);
+        String segmentUrl = "https://connectedplatform.s3.ap-northeast-2.amazonaws.com/hls/"
+                + playlistRoot.getFileName().toString()
+                +"/"
+                + segment;
 
-        if(Files.exists(segmentPath)){
-            return ResponseEntity.ok().body(new PathResource(segmentPath));
-        }
-        else{
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-        }
+        return ResponseEntity.ok(segmentUrl);
     }
 
 
