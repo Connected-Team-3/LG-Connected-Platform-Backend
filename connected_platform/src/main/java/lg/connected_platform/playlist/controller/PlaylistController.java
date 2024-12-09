@@ -96,11 +96,23 @@ public class PlaylistController {
     }
 
     //특정 유저의 전체 플레이리스트 조회
-    @GetMapping("/getPlaylist/{userId}")
+    @GetMapping("/getPlaylist")
     @Operation(summary = "특정 유저의 전체 플레이리스트 조회")
     public SuccessResponse<ListResult<PlaylistResponse>> getPlaylistByUserId(
-            @PathVariable("userId") Long id){
-        ListResult<PlaylistResponse> result = playlistService.getUserPlaylist(id);
+            @PathVariable("userId") Long id,
+            HttpServletRequest httpServletRequest){
+        //Http 헤더의 Authorization에서 토큰 추출
+        String token = httpServletRequest.getHeader("Authorization");
+
+        if (token == null || !token.startsWith("Bearer ")) {
+            // 토큰이 없거나 형식이 올바르지 않을 경우 예외 처리
+            throw new CustomException(ErrorCode.UNAUTHORIZED);
+        }
+
+        // "Bearer " 부분 제거
+        token = token.substring(7);
+
+        ListResult<PlaylistResponse> result = playlistService.getUserPlaylist(token);
         return SuccessResponse.ok(result);
     }
 

@@ -55,7 +55,10 @@ public enum ErrorCode {
     USER_MISMATCH(-500, "요청 유저와 인증된 유저가 일치하지 않습니다", 403),
     HISTORY_NOT_EXIST(-501, "시청 기록이 존재하지 않습니다.", 406),
     PLAYLIST_NOT_EXIST(-501, "플레이리스트가 존재하지 않습니다.", 406),
-    PLAYLIST_FLAG_ERROR(-502, "삽입과 삭제는 동시에 활성화되거나 비활성화 될 수 없습니다", 422);
+    PLAYLIST_FLAG_ERROR(-502, "삽입과 삭제는 동시에 활성화되거나 비활성화 될 수 없습니다", 422),
+
+    //FOOD
+    FOOD_NOT_EXIST(-601, "food가 존재하지 않습니다.", 460);
 
 
 

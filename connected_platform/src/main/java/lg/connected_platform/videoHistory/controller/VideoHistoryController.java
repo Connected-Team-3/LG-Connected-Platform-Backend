@@ -65,7 +65,7 @@ public class VideoHistoryController {
     }
 
     //유저의 전체 시청 기록 조회
-    @GetMapping("/getHistories/{userId}")
+    @GetMapping("/getHistories")
     @Operation(summary = "유저의 영상 시청 기록 전체 조회")
     public SuccessResponse<ListResult<VideoHistoryResponse>> getHistories(
             HttpServletRequest httpServletRequest){

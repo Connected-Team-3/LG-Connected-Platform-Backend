@@ -126,7 +126,8 @@ public class PlaylistService {
     }
 
     //특정 유저의 전체 플레이리스트 조회
-    public ListResult<PlaylistResponse> getUserPlaylist(Long userId){
+    public ListResult<PlaylistResponse> getUserPlaylist(String token){
+        Long userId = authService.getUserIdFromToken(token);
         User user = userRepository.findById(userId)
                 .orElseThrow(()-> new CustomException(ErrorCode.USER_NOT_EXIST));
 
