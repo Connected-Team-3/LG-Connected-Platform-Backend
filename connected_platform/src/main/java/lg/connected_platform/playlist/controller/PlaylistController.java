@@ -99,7 +99,6 @@ public class PlaylistController {
     @GetMapping("/getPlaylist")
     @Operation(summary = "특정 유저의 전체 플레이리스트 조회")
     public SuccessResponse<ListResult<PlaylistResponse>> getPlaylistByUserId(
-            @PathVariable("userId") Long id,
             HttpServletRequest httpServletRequest){
         //Http 헤더의 Authorization에서 토큰 추출
         String token = httpServletRequest.getHeader("Authorization");
