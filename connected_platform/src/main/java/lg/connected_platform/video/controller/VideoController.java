@@ -11,12 +11,19 @@ import lg.connected_platform.global.exception.CustomException;
 import lg.connected_platform.global.exception.ErrorCode;
 import lg.connected_platform.video.dto.request.VideoCreateRequest;
 import lg.connected_platform.video.dto.request.VideoUpdateRequest;
+import lg.connected_platform.video.dto.request.VideoUploadRequest;
 import lg.connected_platform.video.dto.response.VideoResponse;
 import lg.connected_platform.video.entity.Category;
 import lg.connected_platform.video.service.VideoService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.PutObjectAclRequest;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.time.LocalDateTime;
 
 @RestController
@@ -25,13 +32,42 @@ import java.time.LocalDateTime;
 @RequestMapping("/api/video")
 public class VideoController {
     private final VideoService videoService;
+    private final S3Client s3Client;
+
+    //비디오, 썸네일을 S3에 업로드
+    private String uploadVideoToS3(MultipartFile file, String fileType) throws IOException {
+        try{
+
+            // S3 버킷 이름과 업로드할 파일 경로 (key)
+            String bucketName = "connectedplatform";
+            String s3Key = fileType + "/" + System.currentTimeMillis() + "_" + file.getOriginalFilename();
+
+            // MultipartFile에서 InputStream을 가져옵니다.
+            InputStream inputStream = file.getInputStream();
+
+            // PutObjectRequest 생성: 이 객체에서 파일과 ACL을 처리
+            PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+                    .bucket(bucketName)   // S3 버킷 이름
+                    .key(s3Key)           // S3에 저장할 파일 경로 (key)
+                    .acl("public-read")   // 퍼블릭 읽기 권한 설정
+                    .build();
+
+            // S3에 파일 업로드
+            s3Client.putObject(putObjectRequest, software.amazon.awssdk.core.sync.RequestBody.fromInputStream(inputStream, file.getSize()));
+
+            //업로드 된 파일의 s3 url 반환
+            return "https://connectedplatform.s3.ap-northeast-2.amazonaws.com/" + s3Key;
+        }catch (Exception e){
+            throw new RuntimeException("Failed to upload file to s3");
+        }
+    }
 
     //영상 업로드
     @PostMapping("/upload")
     @Operation(summary = "영상 업로드")
     public SuccessResponse<SingleResult<Long>> upload(
-            @Valid @RequestBody VideoCreateRequest request,
-            HttpServletRequest httpServletRequest) {
+            @Valid @RequestBody VideoUploadRequest request,
+            HttpServletRequest httpServletRequest) throws IOException {
 
         //Http 헤더의 Authorization에서 토큰 추출
         String token = httpServletRequest.getHeader("Authorization");
@@ -44,7 +80,22 @@ public class VideoController {
         // "Bearer " 부분 제거
         token = token.substring(7);
 
-        SingleResult<Long> result = videoService.save(request, token);
+
+
+        String videoUrl = uploadVideoToS3(request.videoFile(), "videos");
+        String thumbnailUrl = uploadVideoToS3(request.thumbnailFile(), "thumbnails");
+
+        VideoCreateRequest new_request = new VideoCreateRequest(
+                request.title(),
+                request.description(),
+                request.uploaderId(),
+                videoUrl,
+                thumbnailUrl,
+                request.hashtags(),
+                request.category(),
+                request.foodName(),
+                request.ingredients());
+        SingleResult<Long> result = videoService.save(new_request, token);
         return SuccessResponse.ok(result);
     }
 
