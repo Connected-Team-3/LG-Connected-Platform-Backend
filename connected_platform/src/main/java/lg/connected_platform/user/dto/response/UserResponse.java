@@ -4,10 +4,12 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lg.connected_platform.user.entity.User;
+import lg.connected_platform.videoHistory.dto.response.VideoHistoryResponse;
 import lg.connected_platform.videoHistory.entity.VideoHistory;
 import lombok.Builder;
 
 import java.util.List;
+import java.util.Map;
 
 @Builder
 public record UserResponse(
@@ -25,7 +27,10 @@ public record UserResponse(
         String name,
         @NotNull
         @Schema(description = "시청 기록")
-        List<VideoHistory> videoHistories
+        List<VideoHistoryResponse> videoHistories,
+        @NotNull
+        @Schema(description = "선호 음식")
+        Map<String, List<String>> foodPreferences
 ) {
     public static UserResponse of(User user){
         return UserResponse.builder()
@@ -33,7 +38,9 @@ public record UserResponse(
                 .loginId(user.getLoginId())
                 .password(user.getPassword())
                 .name(user.getName())
-                .videoHistories(user.getVideoHistories())
+                .videoHistories(user.getVideoHistories().stream()
+                        .map(VideoHistoryResponse::of).toList())
+                .foodPreferences(user.getFoodPreferences())
                 .build();
     }
 }
