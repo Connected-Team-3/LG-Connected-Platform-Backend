@@ -64,7 +64,7 @@ public class VideoController {
     }
 
     //영상 업로드
-    @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping("/upload")
     @Operation(summary = "영상 업로드")
     public SuccessResponse<SingleResult<Long>> upload(
             @Valid @RequestBody VideoCreateRequest request,
