@@ -59,6 +59,7 @@ public class VideoController {
             //업로드 된 파일의 s3 url 반환
             return "https://connectedplatform.s3.ap-northeast-2.amazonaws.com/" + s3Key;
         }catch (Exception e){
+            System.out.println(e.getMessage());
             throw new RuntimeException("Failed to upload file to s3");
         }
     }
