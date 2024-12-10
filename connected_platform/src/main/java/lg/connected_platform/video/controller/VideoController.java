@@ -67,7 +67,9 @@ public class VideoController {
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "영상 업로드")
     public SuccessResponse<SingleResult<Long>> upload(
-            @Valid @RequestBody VideoUploadRequest request,
+            @Valid @RequestBody VideoCreateRequest request,
+            @RequestParam("videoFile") MultipartFile videoFile,
+            @RequestParam("thumbnailFile") MultipartFile thumbnailFile,
             HttpServletRequest httpServletRequest) throws IOException {
 
         //Http 헤더의 Authorization에서 토큰 추출
@@ -83,8 +85,8 @@ public class VideoController {
 
 
 
-        String videoUrl = uploadVideoToS3(request.videoFile(), "videos");
-        String thumbnailUrl = uploadVideoToS3(request.thumbnailFile(), "thumbnails");
+        String videoUrl = uploadVideoToS3(videoFile, "videos");
+        String thumbnailUrl = uploadVideoToS3(thumbnailFile, "thumbnails");
 
         VideoCreateRequest new_request = new VideoCreateRequest(
                 request.title(),
