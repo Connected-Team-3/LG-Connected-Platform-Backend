@@ -17,6 +17,8 @@ import lg.connected_platform.video.service.VideoService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
+
 @RestController
 @RequiredArgsConstructor
 @Tag(name = "영상(Video)")
@@ -103,8 +105,23 @@ public class VideoController {
     @GetMapping("/{category}")
     @Operation(summary = "카테고리별 조회")
     public SuccessResponse<ListResult<VideoResponse>> getVideosByCategory(
-            @PathVariable("category") Category category) {
-        ListResult<VideoResponse> result = videoService.getVideosByCategory(category);
+            @PathVariable("category") Category category,
+            HttpServletRequest httpServletRequest) {
+        //현재 시간 가져오기
+        LocalDateTime now  = LocalDateTime.now();
+
+        //Http 헤더의 Authorization에서 토큰 추출
+        String token = httpServletRequest.getHeader("Authorization");
+
+        if (token == null || !token.startsWith("Bearer ")) {
+            // 토큰이 없거나 형식이 올바르지 않을 경우 예외 처리
+            throw new CustomException(ErrorCode.UNAUTHORIZED);
+        }
+
+        // "Bearer " 부분 제거
+        token = token.substring(7);
+
+        ListResult<VideoResponse> result = videoService.getVideosByCategory(category, token, now);
         return SuccessResponse.ok(result);
     }
 

@@ -12,9 +12,8 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 
-//@Data
-@Getter
 @Setter
+@Getter
 @Entity
 @NoArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
@@ -31,6 +30,7 @@ public class VideoHistory extends TimeStamp {
     @NotNull
     private Long videoTimeStamp = 0L; //어디까지 봤는지
 
+    @Getter
     @LastModifiedDate
     private LocalDateTime lastWatchedAt;
 
@@ -56,4 +56,5 @@ public class VideoHistory extends TimeStamp {
         this.videoTimeStamp = request.videoTimeStamp();
         return this;
     }
+
 }

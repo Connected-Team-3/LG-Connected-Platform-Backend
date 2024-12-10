@@ -9,6 +9,7 @@ import lg.connected_platform.global.service.AuthService;
 import lg.connected_platform.global.service.ResponseService;
 import lg.connected_platform.user.entity.User;
 import lg.connected_platform.user.repository.UserRepository;
+import lg.connected_platform.user.service.UserService;
 import lg.connected_platform.video.entity.Video;
 import lg.connected_platform.video.repository.VideoRepository;
 import lg.connected_platform.videoHistory.dto.request.VideoHistoryUpdateRequest;
@@ -18,7 +19,12 @@ import lg.connected_platform.videoHistory.repository.VideoHistoryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -57,8 +63,14 @@ public class VideoHistoryService {
         User user = userRepository.findById(currentUserId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_EXIST));
         user.getVideoHistories().add(videoHistory);
+        //userRepository.save(user);
 
         videoHistoryRepository.save(videoHistory.update(request));
+
+        //선호도 업데이트
+        updateFoodPreferences(user);
+        userRepository.save(user);
+
         return ResponseService.getSingleResult(videoHistory.getId());
     }
 
@@ -126,5 +138,47 @@ public class VideoHistoryService {
                 .orElseThrow(() -> new CustomException(ErrorCode.HISTORY_NOT_EXIST));
 
         return ResponseService.getSingleResult(VideoHistoryResponse.of(videoHistory));
+    }
+
+
+    //유저의 시간대별 음식 선호도 조사
+    public void updateFoodPreferences(User user){
+        Map<String, List<String>> preferences = new HashMap<>();
+        List<VideoHistory> histories = user.getVideoHistories();
+
+        //시간대를 기준으로 음식 조회 기록 분류
+        Map<String, List<Video>> categorizedVideos = histories.stream()
+                .collect(Collectors.groupingBy(
+                        (VideoHistory vh) ->{
+                            LocalDateTime time = vh.getLastWatchedAt();
+                            int hour = time.getHour();
+                            if(hour >= 6 && hour < 12) return "morning";
+                            else if(hour >= 12 && hour < 18) return "afternoon";
+                            else if(hour >= 18 && hour < 24) return "evening";
+                            else return "night";
+                        },
+                        Collectors.mapping(VideoHistory::getVideo, Collectors.toList())
+                ));
+
+        //시간대별로 음식 종류 집계
+        for(Map.Entry<String, List<Video>> entry : categorizedVideos.entrySet()){
+            String timeCategory = entry.getKey();
+            List<Video> videos = entry.getValue();
+
+            Map<String, Long> foodCount = videos.stream()
+                    .map(video -> video.getFood().getName()) //음식 종류 추출
+                    .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
+
+            //음식 종류를 조회 수에 따라 정렬해서 상위 3개 선택
+            List<String> topFoods = foodCount.entrySet().stream()
+                    .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
+                    .limit(3)
+                    .map(Map.Entry::getKey)
+                    .collect(Collectors.toList());
+
+            preferences.put(timeCategory, topFoods);
+        }
+
+        user.setFoodPreferences(preferences);
     }
 }

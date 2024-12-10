@@ -15,7 +15,9 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Data
 @Entity
@@ -42,6 +44,11 @@ public class User extends TimeStamp {
 
     @OneToMany(mappedBy = "uploader")
     private List<Video> videos = new ArrayList<>();
+
+    @ElementCollection
+    @CollectionTable(name = "user_food_preference", joinColumns = @JoinColumn(name = "user_id"))
+    @Column(name = "preferences")
+    private Map<String, List<String>> foodPreferences = new HashMap<>(); //key : "morning", "afternoon" 등
 
     @Builder
     public User(

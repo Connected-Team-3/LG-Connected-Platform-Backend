@@ -24,6 +24,8 @@ import lg.connected_platform.videoHashtag.repository.VideoHashtagRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -168,13 +170,45 @@ public class VideoService {
         return ResponseService.getSingleResult(video.getId());
     }
 
+    //요청을 보낸 시간대 확인
+    private String determineTimeZone(LocalDateTime now){
+        int hour = now.getHour();
+        if(hour >= 6 && hour < 12) return "morning";
+        else if(hour >= 12 && hour < 18) return "afternoon";
+        else if(hour >= 18 && hour < 24) return "evening";
+        else return "night";
+    }
+
+    //foodPreferences에서 특정 시간대의 선호도 가져오기
+    public List<String> getTopFoodsByCurrentTime(User user, LocalDateTime requestTime){
+        String timeZone = determineTimeZone(requestTime);
+        return user.getFoodPreferences().getOrDefault(timeZone, List.of());
+    }
+
     //카테고리별 영상 전체 조회
-    public ListResult<VideoResponse> getVideosByCategory(Category category){
-        List<VideoResponse> videoList = videoRepository.findByCategory(category).stream()
+    public ListResult<VideoResponse> getVideosByCategory(Category category, String token, LocalDateTime requestTime){
+        Long currentUserId = authService.getUserIdFromToken(token);
+        User user = userRepository.findById(currentUserId)
+                .orElseThrow(()-> new CustomException(ErrorCode.USER_NOT_EXIST));
+
+        //요청을 보낸 시간대의 선호도 가져오기
+        List<String> topFoods = getTopFoodsByCurrentTime(user, requestTime);
+
+        //카테고리별 비디오 리스트 조회
+        List<Video> videoList = videoRepository.findByCategory(category);
+
+        //요청을 보낸 시간대의 선호 음식이 앞에 오도록 비디로 리스트 정렬
+        videoList.sort(Comparator.comparingInt((Video video) ->{
+            String foodName = video.getFood().getName();
+            int index = topFoods.indexOf(foodName);
+            return index == -1 ? Integer.MAX_VALUE : index;
+        }));
+
+        List<VideoResponse> videoResponseList = videoList.stream()
                 .map(VideoResponse::of)
                 .toList();
 
-        return ResponseService.getListResult(videoList);
+        return ResponseService.getListResult(videoResponseList);
     }
 
     //특정 유저가 업로드한 영상 전체 조회
