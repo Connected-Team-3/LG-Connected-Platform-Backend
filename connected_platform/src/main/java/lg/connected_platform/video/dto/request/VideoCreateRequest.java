@@ -15,9 +15,6 @@ public record VideoCreateRequest(
     @NotBlank
     @Schema(description = "video 설명", example = "설명입니다")
     String description,
-    @NotNull
-    @Schema(description = "업로더 회원 id", example = "1")
-    Long uploaderId,
     @NotBlank
     @Schema(description = "영상 url", example = "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4")
     String sourceUrl,

@@ -91,7 +91,6 @@ public class VideoController {
         VideoCreateRequest new_request = new VideoCreateRequest(
                 request.title(),
                 request.description(),
-                request.uploaderId(),
                 videoUrl,
                 thumbnailUrl,
                 request.hashtags(),

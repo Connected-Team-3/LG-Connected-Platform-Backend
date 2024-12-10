@@ -46,12 +46,12 @@ public class VideoService {
         //업로더와 업로드 요청 회원이 같아야 함
         Long currentUserId = authService.getUserIdFromToken(token);
 
-        if(!currentUserId.equals(request.uploaderId())){
+        /*if(!currentUserId.equals(request.uploaderId())){
             throw new CustomException(ErrorCode.VIDEO_UPLOADER_MISMATCH);
-        }
+        }*/
 
         //업로더 조회
-        User uploader = userRepository.findById(request.uploaderId())
+        User uploader = userRepository.findById(currentUserId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_EXIST));
 
         //Food 생성 및 설정
