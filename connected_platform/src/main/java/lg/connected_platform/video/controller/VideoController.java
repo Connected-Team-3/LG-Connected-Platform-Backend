@@ -16,6 +16,7 @@ import lg.connected_platform.video.dto.response.VideoResponse;
 import lg.connected_platform.video.entity.Category;
 import lg.connected_platform.video.service.VideoService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -63,7 +64,7 @@ public class VideoController {
     }
 
     //영상 업로드
-    @PostMapping("/upload")
+    @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "영상 업로드")
     public SuccessResponse<SingleResult<Long>> upload(
             @Valid @RequestBody VideoUploadRequest request,
