@@ -26,6 +26,8 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 @RestController
 @RequiredArgsConstructor
@@ -83,7 +85,7 @@ public class VideoController {
         // "Bearer " 부분 제거
         token = token.substring(7);
 
-
+        Set<String> hashtags = (request.hashtags() != null) ? request.hashtags() : new HashSet<>();
 
         String videoUrl = uploadVideoToS3(videoFile, "videos");
         String thumbnailUrl = uploadVideoToS3(thumbnailFile, "thumbnails");
@@ -93,7 +95,7 @@ public class VideoController {
                 request.description(),
                 videoUrl,
                 thumbnailUrl,
-                request.hashtags(),
+                hashtags,
                 request.category(),
                 request.foodName(),
                 request.ingredients());

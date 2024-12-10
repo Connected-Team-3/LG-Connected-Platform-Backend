@@ -6,6 +6,9 @@ import jakarta.validation.constraints.NotNull;
 import lg.connected_platform.hashtag.entity.Hashtag;
 import lg.connected_platform.video.entity.Category;
 
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public record VideoCreateRequest(
