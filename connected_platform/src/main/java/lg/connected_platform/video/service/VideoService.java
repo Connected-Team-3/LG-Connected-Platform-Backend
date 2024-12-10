@@ -194,10 +194,14 @@ public class VideoService {
         //요청을 보낸 시간대의 선호도 가져오기
         List<String> topFoods = getTopFoodsByCurrentTime(user, requestTime);
 
+        List<Video> videoList;
         //카테고리별 비디오 리스트 조회
-        List<Video> videoList = videoRepository.findByCategory(category);
+        if(category == Category.ALL){
+            videoList = videoRepository.findAll();
+        }
+        else videoList = videoRepository.findByCategory(category);
 
-        //요청을 보낸 시간대의 선호 음식이 앞에 오도록 비디로 리스트 정렬
+        //요청을 보낸 시간대의 선호 음식이 앞에 오도록 비디오 리스트 정렬
         videoList.sort(Comparator.comparingInt((Video video) ->{
             String foodName = video.getFood().getName();
             int index = topFoods.indexOf(foodName);

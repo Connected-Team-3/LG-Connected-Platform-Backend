@@ -9,5 +9,6 @@ public enum Category {
     SNACK_BAR,
     DESSERT,
     VEGETARIAN,
-    ETC
+    ETC,
+    ALL
 }

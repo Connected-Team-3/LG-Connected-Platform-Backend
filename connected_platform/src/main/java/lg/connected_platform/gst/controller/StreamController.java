@@ -5,44 +5,31 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.PostConstruct;
+import lg.connected_platform.gst.repository.GstRepository;
 import lg.connected_platform.video.entity.Video;
 import lg.connected_platform.video.repository.VideoRepository;
 import lombok.RequiredArgsConstructor;
 import org.freedesktop.gstreamer.*;
-import org.springframework.core.io.PathResource;
-import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import software.amazon.awssdk.services.s3.S3Client;
 
-import java.awt.*;
-import java.awt.geom.AffineTransform;
-import java.awt.geom.GeneralPath;
-import java.awt.image.BufferedImage;
-import java.awt.image.DataBufferInt;
-import java.io.File;
 import java.io.IOException;
-import java.net.URI;
-import java.nio.ByteOrder;
-import java.nio.IntBuffer;
 import java.nio.file.*;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @RestController
-//@CrossOrigin(origins = "http://3.39.232.28:8080")
 @Tag(name = "스트리밍(Stream)")
 @RequestMapping("/api/stream")
 @RequiredArgsConstructor
 public class StreamController {
-    private final Map<Long, Pipeline> pipelines = new ConcurrentHashMap<>(); //videoId별로 파이프라인 관리
-    private final Map<Long, Path> playlistRoots = new ConcurrentHashMap<>(); //videoId별로 hls 파일 경로 관리
     private final VideoRepository videoRepository;
+    private final GstRepository gstRepository;
     private final S3Client s3Client;
+    private final Map<Long, Pipeline> pipelineMap = new ConcurrentHashMap<>();
 
     //s3로 세그먼트와 플레이리스트 파일 업로드
     private void uploadToS3(String bucketName, Path filePath, String s3Key){
@@ -128,12 +115,6 @@ public class StreamController {
             @ApiResponse(responseCode = "500", description = "스트리밍 시작 중 오류가 발생했습니다.")
     })
     public String startStreaming(@RequestParam("videoId") Long videoId) throws IOException {
-        //이미 스트리밍이 진행 중인 경우
-        if (pipelines.containsKey(videoId)) {
-            String masterPlaylistUrl = "https://connectedplatform.s3.ap-northeast-2.amazonaws.com/hls/hls_" + videoId + "/master_playlist.m3u8";
-            return "Streaming is already running! Access it at: " + masterPlaylistUrl;
-        }
-        
         //영상 원본 url 가져오기
         Video video = videoRepository.findById(videoId)
                         .orElseThrow(()-> new RuntimeException("Video not found"));
@@ -145,7 +126,7 @@ public class StreamController {
         Files.createDirectories(hlsDir); // hls 폴더 생성
         Path playlistRoot = hlsDir.resolve("hls_" + videoId); // videoId별 폴더 생성
         Files.createDirectories(playlistRoot); // videoId별 폴더 생성
-        playlistRoots.put(videoId, playlistRoot);
+        gstRepository.save(new lg.connected_platform.gst.entity.Gst(playlistRoot, videoId));
 
         //gstreamer 파이프라인 선언
         Pipeline pipeline;
@@ -178,8 +159,7 @@ public class StreamController {
         configureSink(pipeline.getElementByName("low_sink"), playlistRoot.resolve("low_playlist.m3u8"), playlistRoot.resolve("low_%05d.ts"));
         configureSink(pipeline.getElementByName("medium_sink"), playlistRoot.resolve("medium_playlist.m3u8"), playlistRoot.resolve("medium_%05d.ts"));
         configureSink(pipeline.getElementByName("high_sink"), playlistRoot.resolve("high_playlist.m3u8"), playlistRoot.resolve("high_%05d.ts"));
-        pipelines.put(videoId, pipeline);
-
+        pipelineMap.put(videoId, pipeline);
 
         //gstreamer 버스 이벤트 연결
         pipeline.getBus().connect((Bus.ERROR) ((source, code, message)->{
@@ -249,35 +229,11 @@ public class StreamController {
         return "Streaming started successfully! Access at your S3 bucket.";
     }
 
-    // 스트리밍 종료 시 임시 파일 삭제
-    private void cleanUpTempFiles(Path playlistRoot) {
-        try {
-            // 모든 .goutputstream-~~~ 임시 파일을 삭제
-            Files.walkFileTree(playlistRoot, new SimpleFileVisitor<Path>() {
-                @Override
-                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                    if (file.getFileName().toString().startsWith(".goutputstream")) {
-                        Files.delete(file);
-                        System.out.println("Deleted temporary file: " + file);
-                    }
-                    return FileVisitResult.CONTINUE;
-                }
-
-                @Override
-                public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
-                    return FileVisitResult.CONTINUE;
-                }
-            });
-        } catch (IOException e) {
-            System.err.println("Failed to delete temporary files: " + e.getMessage());
-        }
-    }
-
     //스트리밍 중단
     @PostMapping("/stop")
     @Operation(summary = "스트리밍 중단", description = "현재 활성화된 스트리밍을 중단")
     public String stopStreaming(@RequestParam("videoId") Long videoId) throws InterruptedException {
-        Pipeline pipeline = pipelines.remove(videoId);
+        Pipeline pipeline = pipelineMap.remove(videoId);
         if (pipeline != null) {
             //파이프라인 중단
             pipeline.stop();
@@ -285,7 +241,8 @@ public class StreamController {
             Thread.sleep(1000);  // 1초 정도 대기하여 파일이 완전히 닫히도록 함
         }
 
-        Path playlistRoot = playlistRoots.remove(videoId);
+        gstRepository.delete(gstRepository.findByVideoId(videoId)
+                .orElseThrow(()-> new RuntimeException()));
 
         // 임시 파일 정리
         //cleanUpTempFiles(playlistRoot);
@@ -298,7 +255,10 @@ public class StreamController {
     @GetMapping("/{videoId}/master_playlist.m3u8")
     @Operation(summary = "마스터 플레이리스트 조회", description = "비디오 ID에 해당하는 마스터 플레이리스트(.m3u8)를 반환")
     public ResponseEntity<String> getMasterPlaylist(@PathVariable("videoId") Long videoId) {
-        Path playlistRoot = playlistRoots.get(videoId);
+        Path playlistRoot = gstRepository.findByVideoId(videoId)
+                .orElseThrow(()-> new RuntimeException())
+                .getPlaylistRoot();
+
         if(playlistRoot == null){
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Master playlist not found");
         }
@@ -306,6 +266,7 @@ public class StreamController {
         String masterPlaylistUrl = "https://connectedplatform.s3.ap-northeast-2.amazonaws.com/hls/"
                 + playlistRoot.getFileName().toString()
                 + "/master_playlist.m3u8";
+        System.out.println(masterPlaylistUrl);
 
         return ResponseEntity.ok(masterPlaylistUrl);
     }
@@ -315,7 +276,9 @@ public class StreamController {
     @GetMapping("/{videoId}/{segment}")
     @Operation(summary = "세그먼트 파일 조회", description = "세그먼트 이름에 해당하는 HLS 세그먼트(.ts)를 반환")
     public ResponseEntity<String> getSegment(@PathVariable("videoId") Long videoId, @PathVariable("segment") String segment) {
-        Path playlistRoot = playlistRoots.get(videoId);
+        Path playlistRoot = gstRepository.findByVideoId(videoId)
+                .orElseThrow(()-> new RuntimeException())
+                .getPlaylistRoot();
         if(playlistRoot == null){
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Segment not found");
         }
