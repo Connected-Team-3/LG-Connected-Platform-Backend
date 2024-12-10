@@ -64,10 +64,10 @@ public class VideoController {
     }
 
     //영상 업로드
-    @PostMapping("/upload")
+    @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "영상 업로드")
     public SuccessResponse<SingleResult<Long>> upload(
-            @Valid @RequestBody VideoCreateRequest request,
+            @Valid @ModelAttribute VideoCreateRequest request,
             @RequestParam("videoFile") MultipartFile videoFile,
             @RequestParam("thumbnailFile") MultipartFile thumbnailFile,
             HttpServletRequest httpServletRequest) throws IOException {
