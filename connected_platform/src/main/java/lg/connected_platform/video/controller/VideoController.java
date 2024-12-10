@@ -46,11 +46,10 @@ public class VideoController {
             // MultipartFile에서 InputStream을 가져옵니다.
             InputStream inputStream = file.getInputStream();
 
-            // PutObjectRequest 생성: 이 객체에서 파일과 ACL을 처리
+            // PutObjectRequest 생성
             PutObjectRequest putObjectRequest = PutObjectRequest.builder()
                     .bucket(bucketName)   // S3 버킷 이름
                     .key(s3Key)           // S3에 저장할 파일 경로 (key)
-                    .acl("public-read")   // 퍼블릭 읽기 권한 설정
                     .build();
 
             // S3에 파일 업로드
