@@ -51,14 +51,11 @@ public class VideoController {
             // MultipartFile에서 InputStream을 가져옵니다.
             InputStream inputStream = file.getInputStream();
 
-            Map<String, String> metadata = new HashMap<>();
-            metadata.put("Content-Type", "video/mp4"); // Content-Type 설정
-
             // PutObjectRequest 생성
             PutObjectRequest putObjectRequest = PutObjectRequest.builder()
                     .bucket(bucketName)   // S3 버킷 이름
                     .key(s3Key)           // S3에 저장할 파일 경로 (key)
-                    .metadata(metadata)
+                    .contentType("video/mp4")
                     .build();
 
             // S3에 파일 업로드
