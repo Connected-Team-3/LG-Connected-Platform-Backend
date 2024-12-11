@@ -75,8 +75,19 @@ public class UserController {
     @GetMapping("/{userId}")
     @Operation(summary = "특정 회원 조회")
     public SuccessResponse<SingleResult<UserResponse>> findById(
-            @PathVariable("userId") Long id){
-        SingleResult<UserResponse> result = userService.findById(id);
+            HttpServletRequest httpServletRequest){
+        //Http 헤더의 Authorization에서 토큰 추출
+        String token = httpServletRequest.getHeader("Authorization");
+
+        if (token == null || !token.startsWith("Bearer ")) {
+            // 토큰이 없거나 형식이 올바르지 않을 경우 예외 처리
+            throw new CustomException(ErrorCode.UNAUTHORIZED);
+        }
+
+        // "Bearer " 부분 제거
+        token = token.substring(7);
+
+        SingleResult<UserResponse> result = userService.findById(token);
         return SuccessResponse.ok(result);
     }
 }
