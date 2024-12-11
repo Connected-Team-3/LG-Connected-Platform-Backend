@@ -1,5 +1,6 @@
 package lg.connected_platform.video.controller;
 
+import io.awspring.cloud.s3.ObjectMetadata;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
@@ -26,7 +27,9 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 @RestController
@@ -48,10 +51,14 @@ public class VideoController {
             // MultipartFile에서 InputStream을 가져옵니다.
             InputStream inputStream = file.getInputStream();
 
+            Map<String, String> metadata = new HashMap<>();
+            metadata.put("Content-Type", "video/mp4"); // Content-Type 설정
+
             // PutObjectRequest 생성
             PutObjectRequest putObjectRequest = PutObjectRequest.builder()
                     .bucket(bucketName)   // S3 버킷 이름
                     .key(s3Key)           // S3에 저장할 파일 경로 (key)
+                    .metadata(metadata)
                     .build();
 
             // S3에 파일 업로드
