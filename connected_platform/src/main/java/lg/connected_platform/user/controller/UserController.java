@@ -72,7 +72,7 @@ public class UserController {
     }
 
     //특정 유저 조회
-    @GetMapping("/{userId}")
+    @GetMapping()
     @Operation(summary = "특정 회원 조회")
     public SuccessResponse<SingleResult<UserResponse>> findById(
             HttpServletRequest httpServletRequest){
