@@ -1,0 +1,16 @@
+spring:
+  application:
+    name: connected_platform
+  config:
+    import: optional:application-secret.properties
+  jpa:
+    hibernate:
+      ddl-auto: create
+      dialect: org.hibernate.dialect.MySQLDialect
+    defer-datasource-initialization: false
+    properties:
+      hibernate:
+        format_sql: true
+    show-sql: false
+  jwt:
+    secret: ${JWT_SECRET_KEY}
