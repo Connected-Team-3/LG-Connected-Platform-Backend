@@ -151,7 +151,7 @@ public class StreamController {
                     "uridecodebin uri=" + videoSourceUrl + " ! tee name=t "
                             + "t. ! queue max-size-buffers=0 max-size-time=0 max-size-bytes=0 ! videoscale ! video/x-raw,width=640,height=360 ! x264enc bitrate=800 ! hlssink2 max-files=5 target-duration=10 name=low_sink location=" + playlistRoot.resolve("low_%05d.ts") + " playlist-location=" + playlistRoot.resolve("low_playlist.m3u8") + " "
                             + "t. ! queue max-size-buffers=0 max-size-time=0 max-size-bytes=0 ! videoscale ! video/x-raw,width=1280,height=720 ! x264enc bitrate=1500 ! hlssink2 max-files=5 target-duration=10 name=medium_sink location=" + playlistRoot.resolve("medium_%05d.ts") + " playlist-location=" + playlistRoot.resolve("medium_playlist.m3u8") + " "
-                            + "t. ! queue max-size-buffers=0 max-size-time=0 max-size-bytes=0 ! videoscale ! video/x-raw,width=1920,height=1080 ! x264enc bitrate=800 ! hlssink2 max-files=5 target-duration=10 name=high_sink location=" + playlistRoot.resolve("high_%05d.ts") + " playlist-location=" + playlistRoot.resolve("high_playlist.m3u8")
+                            + "t. ! queue max-size-buffers=0 max-size-time=0 max-size-bytes=0 ! videoscale ! video/x-raw,width=1920,height=1080 ! x264enc bitrate=8000 ! hlssink2 max-files=5 target-duration=10 name=high_sink location=" + playlistRoot.resolve("high_%05d.ts") + " playlist-location=" + playlistRoot.resolve("high_playlist.m3u8")
             );
         }
 

@@ -76,7 +76,8 @@ public class UserService {
     }
 
     //특정 회원 조회
-    public SingleResult<UserResponse> findById(Long id){
+    public SingleResult<UserResponse> findById(String token){
+        Long id = authService.getUserIdFromToken(token);
         User user = userRepository.findById(id)
                 .orElseThrow(()-> new CustomException(ErrorCode.USER_NOT_EXIST));
 
